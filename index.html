@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="6802e6ce">
+<meta name="build" content="93b975d1">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,7 +22,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--black);color:var(--white);overflow-x:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;min-height:100dvh}
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;min-height:100vh;min-height:100dvh}
 body.locked{overflow:hidden}
 button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
 a{color:inherit;text-decoration:none}
@@ -30,7 +30,7 @@ img,svg{display:block;max-width:100%}
 ::selection{background:#fff;color:#000}
 ::-webkit-scrollbar{width:0;height:0}
 
-.app{max-width:560px;margin:0 auto;position:relative;min-height:100dvh;padding-bottom:calc(var(--tab) + var(--safe-b) + 58px)}
+.app{max-width:560px;margin:0 auto;position:relative;min-height:100vh;min-height:100dvh;padding-bottom:calc(var(--tab) + var(--safe-b) + 58px)}
 .page{display:none;padding:calc(var(--safe-t) + 74px) 16px 8px;animation:pageIn .42s var(--ease)}
 .page.active{display:block}
 @keyframes pageIn{from{opacity:0;transform:translateY(14px)}}
@@ -426,20 +426,47 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .foot b{color:var(--muted);font-weight:800}
 .tg-hint{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10.5px;color:var(--muted2);letter-spacing:.06em;margin-top:10px}
 .tg-hint svg{width:13px;height:13px}
-@media(max-width:480px){
-  .whoami{padding:0 2px;max-width:32px}
-  .whoami .nm{display:none}
+/* header ladder: everything important stays visible on every phone width */
+.brand{min-width:0;overflow:hidden}
+.brand > span:not(.brand-mark){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:479px){
+  .whoami{padding:0 3px 0 2px;max-width:74px}
+  .whoami .nm{display:block;max-width:44px}
+  .brand small{display:none}
+  .brand > span:not(.brand-mark){display:none}
+  .brand{gap:0}
+  .pill-btn{padding:0 8px;font-size:11.5px;gap:5px}
+  .spin-top{padding:0 8px 0 6px;font-size:11px;gap:6px}
+  .spin-top-ico,.spin-top-ico svg{width:19px;height:19px}
+  .topbar-in{padding:0 11px}
+  .top-actions{gap:6px}
+  .tab span{font-size:8px}
 }
 @media(max-width:374px){
-  .brand span:not(.brand-mark){display:none}
-  .brand{gap:0}
+  .whoami{padding:0 2px;max-width:34px}
+  .whoami .nm{display:none}
 }
-@media(max-width:410px){
-  .brand small{display:none}
-  .pill-btn{padding:0 9px;font-size:11.5px;gap:5px}
-  .spin-top{padding:0 9px 0 6px;font-size:11px}
-  .topbar-in .icon-btn{display:none}
-  .spin-top-ico,.spin-top-ico svg{width:19px;height:19px}
+@media(max-width:359px){
+  .topbar-in{gap:4px;padding:0 9px}
+  .top-actions{gap:4px}
+  .pill-btn{padding:0 7px;font-size:11px}
+  .spin-top{padding:0 7px 0 5px;font-size:10.5px;gap:5px}
+}
+@media(min-width:480px){
+  .whoami{max-width:118px}
+  .whoami .nm{display:block;max-width:58px}
+  .spin-top-tx{display:inline}
+}
+/* short landscape phone: shrink the hero so content is reachable */
+@media(max-height:480px){
+  .page{padding-top:calc(var(--safe-t) + 66px)}
+  .page h1{font-size:30px}
+  .page > .center > h2{font-size:20px}
+  .page > .center > .sub{font-size:11.5px;line-height:1.5}
+  .skin-stage{height:200px}
+  .wheel-wrap{max-width:240px}
+  .showcase{max-width:170px}
+  h1{font-size:32px}
 }
 
 /* ================= ECONOMY: market / leaderboard / sell ================= */
@@ -525,6 +552,13 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .spin-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:-6px;z-index:7;display:flex;gap:4px;align-items:center}
 .spin-bar i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
 .spin-bar i.on{background:#fff;box-shadow:0 0 8px #fff}
+/* Safari < 15 / old Android: no aspect-ratio -> keep the card ratio with padding */
+@supports not (aspect-ratio: 200 / 271){
+  .gcard{height:0;padding-top:135.5%;overflow:hidden}
+  .gc-dm{height:0;padding-bottom:15.5%}
+  .gc-dm svg,.gc-dm .lock{position:absolute;inset:0;width:100%;height:100%}
+  .skin-stage{height:250px}
+}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .rv{opacity:1;transform:none}
@@ -1300,8 +1334,10 @@ function renderSkin(canvas, yaw, pitch, zoom){
 }
 
 /* draggable viewer: damped target angles, inertia, renders only when it moves */
+let skinViewerCount = 0;
 function mountSkinViewer(stageEl, canvasEl){
   if(!stageEl || !canvasEl) return null;
+  skinViewerCount++;
   const st = { yaw:-0.42, pitch:0.07, yawT:-0.42, pitchT:0.07, vy:0, vp:0, zoom:1.04, dragging:false, last:-1, dirty:true };
   let raf = 0, lastT = 0, lastX = 0, lastY = 0, lastMove = 0, hidden = false;
 
@@ -1314,10 +1350,19 @@ function mountSkinViewer(stageEl, canvasEl){
       canvasEl.width = w; canvasEl.height = h; st.dirty = true;
     }
   };
-  new ResizeObserver(resize).observe(stageEl);
+  if(typeof ResizeObserver === 'function') new ResizeObserver(()=>{ resize(); st.dirty = true; }).observe(stageEl);
   if(typeof IntersectionObserver === 'function'){
-    new IntersectionObserver(es=>{ hidden = !es[0].isIntersecting; }, {threshold:0}).observe(stageEl);
+    const io3 = new IntersectionObserver(es=>{
+      const vis = !!es[0].isIntersecting;
+      if(vis && hidden){ resize(); st.dirty = true; }
+      hidden = !vis;
+    }, {threshold:0});
+    io3.observe(stageEl);
   }
+  /* rotating the phone / opening the keyboard changes the box without a ResizeObserver in some webviews */
+  const onViewport = ()=>{ resize(); st.dirty = true; };
+  window.addEventListener('orientationchange', ()=>{ setTimeout(onViewport, 120); });
+  window.addEventListener('resize', onViewport);
 
   const loop = (ts)=>{
     raf = requestAnimationFrame(loop);
@@ -1393,6 +1438,9 @@ function mountSkinViewer(stageEl, canvasEl){
   resize();
   if(!raf) loop();
   st.render = ()=>{ st.dirty = true; };
+  st.dirty = true;
+  const safety = setInterval(()=>{ if(!hidden) st.dirty = true; }, 4000);  /* repaint after layout shifts */
+  st.stop = ()=>{ if(raf) cancelAnimationFrame(raf); raf = 0; clearInterval(safety); skinViewerCount--; };
   return st;
 }
 
@@ -2183,7 +2231,8 @@ function openClaim(id){
     ${id==='skin24' ? `<div class="roul-wrap" style="margin-top:6px"><div class="hint" style="text-align:center;margin-top:10px">Keep the skin equipped — we re-check it when the timer ends.</div></div>` : ''}
   `;
   openOverlay('#claimOverlay');
-  mountSkinViewer($('#claimStage'), $('#claimCanvas'));
+  if(window.__claimViewer && window.__claimViewer.stop) window.__claimViewer.stop();
+  window.__claimViewer = mountSkinViewer($('#claimStage'), $('#claimCanvas'));
   $('#claimGo').addEventListener('click', ()=> runClaim(id));
 }
 
@@ -2428,11 +2477,23 @@ function renderIdentity(){
   const host = $('#whoami');
   if(!host) return;
   if(USER){
+    const initials = (USER.name||USER.username||'?').trim().charAt(0).toUpperCase();
     host.innerHTML = (USER.photo
-        ? '<img src="'+USER.photo+'" alt="">'
-        : '<span class="ini">'+ (USER.name||'?').trim().charAt(0).toUpperCase() +'</span>')
-      + '<span class="nm">'+(USER.username ? '@'+USER.username : USER.name)+'</span>';
+        ? '<img src="'+USER.photo+'" alt="" referrerpolicy="no-referrer">'
+        : '<span class="ini">'+initials+'</span>')
+      + '<span class="nm">'+esc(USER.username ? '@'+USER.username : USER.name)+'</span>';
     host.title = 'Progress is linked to your Telegram account';
+    /* Telegram photo CDN can be blocked or slow on mobile — always fall back to initials */
+    const av = host.querySelector('img');
+    if(av){
+      av.addEventListener('error', ()=>{
+        const span = document.createElement('span');
+        span.className = 'ini';
+        span.textContent = initials;
+        av.replaceWith(span);
+      }, {once:true});
+      if(av.complete && av.naturalWidth === 0 && av.src) { /* already failed before the listener */ }
+    }
   }else{
     host.innerHTML = '<span class="ini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 3-9.5 18-2.4-6.9L3 11.5 21 3Z"/></svg></span><span class="nm">Guest</span>';
     host.title = 'Open this Mini App inside Telegram to link your progress';
@@ -2863,5 +2924,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58ba960cc99f6eb',t:'MTc5NDM4Mjk2MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58ba960cc99f6eb',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bbbd15e123dd3',t:'MTc5NDM4MzcxNg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bbbd15e123dd3',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
