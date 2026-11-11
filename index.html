@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="87713502">
+<meta name="build" content="fd12e288">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -1124,6 +1124,9 @@ const TKEY='baobabis.tasks.v1.'+UID;
 let state = {balance:0, spins:1, spinsMade:0, items:[]};
 try{ const raw=localStorage.getItem(KEY); if(raw) state=Object.assign(state,JSON.parse(raw)); }catch(e){}
 if(!Array.isArray(state.items)) state.items=[];
+state.balance = Number(state.balance) || 0;
+state.spins = Number(state.spins) || 0;
+state.spinsMade = Number(state.spinsMade) || 0;
 let cloudReady = false;
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} pushCloud(); };
 
@@ -1946,6 +1949,7 @@ $$('#cardsRow .gcard').forEach(c=>c.addEventListener('click',lockedToast));
 let filter='all';
 function renderInventory(){
   const grid=$('#invGrid');
+  state.items = sanitizeItems(state.items);
   const items=state.items.filter(it=> filter==='all'?true: it.tier===filter);
   if(!items.length){
     grid.innerHTML=`<div class="inv-empty">
@@ -1955,7 +1959,8 @@ function renderInventory(){
   }
   grid.innerHTML=items.map((it,i)=>{
     const tpl=byCode(it.code);
-    return `<div class="inv-wrap ${it.origin.includes('Matrix')?'qr':''}" data-item="${it.id}" style="animation-delay:${Math.min(i*30,240)}ms">
+    const isQr = typeof it.origin === 'string' && it.origin.indexOf('Matrix') >= 0;
+    return `<div class="inv-wrap ${isQr?'qr':''}" data-item="${esc(it.id)}" style="animation-delay:${Math.min(i*30,240)}ms">
       ${cardHTML(tpl,{mini:true},true)}</div>`;
   }).join('')+slot();
 }
@@ -2419,6 +2424,46 @@ function migrateDropSchema(cloud){
   return true;
 }
 
+/* every card the app renders must survive missing / malformed fields (older builds wrote less) */
+function sanitizeItems(list){
+  if(!Array.isArray(list)) return [];
+  const out = [];
+  list.forEach(raw=>{
+    if(!raw || typeof raw !== 'object') return;
+    const tpl = raw.code ? byCode(raw.code) : null;
+    const tier = TIER_ORDER.indexOf(raw.tier) >= 0 ? raw.tier : (tpl ? tpl.tier : null);
+    if(!tier) return;                                   /* nothing usable — skip it */
+    out.push({
+      id: String(raw.id || ('c' + Math.random().toString(36).slice(2,10))),
+      code: String(raw.code || (tpl ? tpl.code : '?')),
+      tier,
+      num: Number(raw.num) || (tpl ? tpl.num : 0),
+      photo: raw.photo || (tpl ? tpl.photo : null),
+      value: Number(raw.value) || PRICE[tier] || 0,
+      ts: Number(raw.ts) || Date.now(),
+      origin: typeof raw.origin === 'string' ? raw.origin : 'Free spin',
+      limited: !!raw.limited || !!(tpl && tpl.limited),
+      creator: (raw.creator && typeof raw.creator === 'object') ? raw.creator : undefined,
+      originUid: raw.originUid || undefined
+    });
+  });
+  return out;
+}
+function sanitizeTasks(t, fallback){
+  const base = Object.assign({ nick:'', active:null, history:[], limitedClaimed:false, limitedCode:null, startedAt:0, drops:0, codes:[] }, fallback || {});
+  if(!t || typeof t !== 'object') return base;
+  const out = Object.assign(base, t);
+  out.nick = typeof out.nick === 'string' ? out.nick : '';
+  out.history = Array.isArray(out.history) ? out.history.filter(x => x && typeof x === 'object') : [];
+  out.codes = Array.isArray(out.codes) ? out.codes.filter(c => typeof c === 'string') : [];
+  out.drops = Math.max(0, Math.min(LIMITED_DROPS, Number(out.drops) || 0));
+  out.limitedClaimed = !!out.limitedClaimed;
+  out.limitedCode = typeof out.limitedCode === 'string' ? out.limitedCode : null;
+  out.active = (out.active && typeof out.active === 'object' && out.active.id) ? out.active : null;
+  out.startedAt = Number(out.startedAt) || 0;
+  return out;
+}
+
 async function syncProfile(){
   const cloud = await pullCloud();
   const migrated = migrateDropSchema(cloud);
@@ -2450,6 +2495,11 @@ async function syncProfile(){
     flushCloud();
   }
   registerLimitedCard();
+  state.balance = Number(state.balance) || 0;
+  state.spins = Number(state.spins) || 0;
+  state.items = sanitizeItems(state.items);
+  tasks = sanitizeTasks(tasks, { nick: tasks.nick, limitedClaimed: tasks.limitedClaimed });
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
   renderInventory(); renderShop(); renderStats(); renderTasks();
   renderMarket(); renderLeaderboard();
   claimPayouts();
@@ -2517,6 +2567,7 @@ function rememberCreator(){
 }
 const creatorsMap = ()=>{ try{ return JSON.parse(localStorage.getItem('baobabis.creators')||'{}'); }catch(e){ return {}; } };
 function creatorName(it){
+  if(!it || typeof it !== 'object') return 'Baobabis';
   if(it.creator && it.creator.name) return it.creator.name;
   const c = creatorsMap();
   if(it.originUid && c[it.originUid]) return c[it.originUid];
@@ -2528,7 +2579,7 @@ function creatorName(it){
 /* quick sell: instant liquidity. Commons below value, high tiers above. */
 const SELL_BONUS = {Basic:0.55, Rare:0.68, Epic:0.8, Mythic:0.92, Platinum:1.05, Legendary:1.2};
 const isLimited = it => !!(it && (it.limited || (byCode(it.code)||{}).limited));
-const fastSellPrice = it => Math.max(1, Math.round((it.value || PRICE[it.tier]) * (SELL_BONUS[it.tier]||0.7)));
+const fastSellPrice = it => Math.max(1, Math.round(((Number(it && it.value) || PRICE[it && it.tier] || 1)) * (SELL_BONUS[it && it.tier] || 0.7)));
 const minListPrice  = it => Math.max(1, Math.round((it.value || PRICE[it.tier]) * 0.5));
 const maxListPrice  = it => Math.max(minListPrice(it), Math.round((it.value || PRICE[it.tier]) * 3));
 
@@ -2963,5 +3014,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bdb88393687ca',t:'MTc5NDM4NTAxNQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bdb88393687ca',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58be9c0092a05fb',t:'MTc5NDM4NTU5Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58be9c0092a05fb',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
