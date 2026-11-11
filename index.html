@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="09c4a33f">
+<meta name="build" content="fef92789">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -525,19 +525,58 @@ input,select,textarea{font-size:16px}
 .eco-note p{font-size:11.5px;line-height:1.55;color:var(--muted)}
 .eco-note p b{color:#fff}
 
+/* ================= PERSONALISED OTTER GRID ================= */
+.otter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:560px){ .otter-grid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (min-width:820px){ .otter-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.otter-slot{position:relative;border-radius:12px;transition:transform .3s var(--ease);display:flex;flex-direction:column;gap:7px}
+.otter-slot.mine:hover{transform:translateY(-5px)}
+.otter-slot .oc-cap{display:flex;flex-direction:column;gap:1px;text-align:left;padding:0 2px}
+.otter-slot .oc-cap b{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;color:#fff;font-weight:700}
+.otter-slot .oc-cap span{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.otter-slot.mine .oc-cap b{color:#fff}
+.otter-slot.locked .oc-cap b{color:#8d8d8d}
+.otter-slot .oc-take{min-height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.otter-slot .oc-take:active{transform:scale(.98)}
+.otter-slot.heldnow .oc-back-state{color:#fff}
+.oc-back::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.3);pointer-events:none;z-index:1}
+.oc-back > *{position:relative;z-index:2}
+.oc-back .oc-shine{z-index:3}
+/* back face of an unowned serial */
+.oc-back .oc-back-mark{position:absolute;top:6%;left:0;right:0;text-align:center;font-size:5.2cqw;letter-spacing:.34em;
+  color:var(--oc-trim);opacity:.55;font-family:ui-monospace,Menlo,monospace}
+.oc-back .oc-back-serial{position:absolute;top:32%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
+  font-size:17cqw;line-height:1;color:var(--oc-trim);opacity:.9}
+.oc-back .oc-back-state{position:absolute;top:53%;left:0;right:0;text-align:center;font-family:ui-monospace,Menlo,monospace;
+  font-size:4.4cqw;letter-spacing:.26em;color:var(--oc-trim);opacity:.75}
+.oc-back .oc-back-model{position:absolute;top:66%;left:0;right:0;text-align:center;font-family:ui-monospace,Menlo,monospace;
+  font-size:3.6cqw;letter-spacing:.2em;color:var(--oc-trim);opacity:.6}
+.oc-back .oc-back-owner{position:absolute;top:74%;left:8%;right:8%;text-align:center;font-size:3.6cqw;
+  color:var(--oc-trim);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-back .oc-dm{right:6%;bottom:5%;opacity:.5}
+
 /* ================= OTTER LIMITED CARD ================= */
 .otter-card{position:relative;width:100%;aspect-ratio:200/267;border-radius:10px;overflow:hidden;
-  background:linear-gradient(180deg,#a89e92 0%,#8b8175 52%,#68604f 100%);
-  box-shadow:0 18px 40px -22px #000,0 0 0 1px rgba(255,255,255,.18);container-type:inline-size}
+  background:linear-gradient(172deg,var(--oc-a,#a89e92) 0%,var(--oc-b,#8b8175) 54%,var(--oc-c,#68604f) 100%);
+  box-shadow:0 18px 40px -22px #000,0 0 0 1px var(--oc-trim,rgba(255,255,255,.18));container-type:inline-size}
+.otter-card .oc-shine{position:absolute;inset:-20% -40%;background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.42) 48%,transparent 58%);
+  transform:translateX(-60%);pointer-events:none;mix-blend-mode:screen}
+.otter-card:hover .oc-shine{animation:ocShine 1.1s var(--ease) forwards}
+@keyframes ocShine{to{transform:translateX(60%)}}
+.otter-card .oc-model{position:absolute;top:64.5%;left:0;right:0;text-align:center;font-family:ui-monospace,Menlo,monospace;
+  font-size:3.4cqw;letter-spacing:.22em;text-transform:uppercase;color:var(--oc-plate,#241e18);opacity:.85}
+.otter-card .oc-model .oc-stars{margin-left:.5em;letter-spacing:.08em;color:var(--oc-plate,#241e18);opacity:.75}
+.otter-card[data-model] .oc-frame{border-color:var(--oc-trim,#e2d8cc)}
 @supports not (aspect-ratio:200/267){ .otter-card{height:0;padding-bottom:133.5%} }
 .otter-card .oc-title{position:absolute;top:4.6%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
   font-size:4.6cqw;letter-spacing:.06em;color:#221d19;opacity:.9}
 .otter-card .oc-frame{position:absolute;left:20%;right:20%;top:17.5%;aspect-ratio:1/1;border:1px solid rgba(226,216,204,.85);
   box-shadow:0 0 0 3px #2e2822,0 10px 22px -12px rgba(0,0,0,.7);overflow:hidden}
 .otter-card .oc-frame img{width:100%;height:100%;object-fit:cover;display:block}
-.otter-card .oc-tier{position:absolute;top:65.5%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
+.otter-card .oc-tier{position:absolute;top:71%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
   font-size:9cqw;line-height:1;color:#1b1713}
-.otter-card .oc-num{position:absolute;top:76.5%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
+.otter-card .oc-num{position:absolute;top:79.5%;left:0;right:0;text-align:center;font-family:'Playfair Display',Georgia,serif;
   font-size:6cqw;line-height:1;color:#221c16}
 .otter-card .oc-owner{position:absolute;bottom:4.4%;left:6%;right:22%;font-size:3.6cqw;letter-spacing:.04em;
   color:#241e18;opacity:.92;font-family:ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -811,7 +850,17 @@ input,select,textarea{font-size:16px}
       <div class="sum"><span>Free spins</span><b id="sumSpins">1</b></div>
     </div>
 
-    <div class="inv-grid rv d3" id="invGrid"></div>
+    <div class="section rv d2" style="padding-top:18px" id="otterSection">
+      <div class="eyebrow rv"><i></i>Otter drop · 10 named cards</div>
+      <h2 class="rv d1" style="margin-top:10px;font-size:21px">Personalised cards</h2>
+      <p class="sub rv d1" style="margin-top:8px">Ten cards exist in total and every one belongs to exactly one player: the nickname is printed on the card and each serial has its own model — a different metal, trim and finish.</p>
+      <div class="otter-grid rv d3" id="otterGrid" style="margin-top:12px"></div>
+    </div>
+
+    <div class="section" style="padding-top:18px">
+      <div class="eyebrow rv"><i></i>Skins you have</div>
+      <div class="inv-grid rv d3" id="invGrid" style="margin-top:12px"></div>
+    </div>
 
     <div class="btn-row" style="margin-top:14px">
       <button class="btn btn-dark btn-sm" id="clearInv" style="width:100%">Clear inventory</button>
@@ -1246,16 +1295,51 @@ function cardHTML(card, opts={}, reveal=false){
    Minecraft nickname and its own serial, so no two cards are ever the same */
 const OTTER_PHOTO = 'otter1';
 const slotOwnerLabel = slot => slot.owner || (slot.nick ? '@' + slot.nick : null);
+/* each serial has its own model: its own metal tone, trim, star count and finish, so ten cards
+   never look the same even before you read the nickname */
+const OTTER_MODELS = [
+  { name:'Ember',   metal:['#d8b58a','#8c6440','#4a3320'], trim:'#f2ddc2', stars:1, plate:'#2a2018' },
+  { name:'Silver',  metal:['#e6e9ec','#a9afb6','#5d646b'], trim:'#ffffff', stars:2, plate:'#1e2226' },
+  { name:'Forest',  metal:['#b8c9a4','#6d8455','#33422a'], trim:'#e4efd6', stars:3, plate:'#1b2417' },
+  { name:'Sapphire',metal:['#b9cbe8','#5f7fae','#2a3d59'], trim:'#e6f0ff', stars:4, plate:'#141d2a' },
+  { name:'Amber',   metal:['#f0cf95','#cf9a45','#6b4a17'], trim:'#fff0cf', stars:5, plate:'#2a1f10' },
+  { name:'Onyx',    metal:['#c9ccd2','#6b7078','#22252a'], trim:'#eef0f3', stars:1, plate:'#0f1114' },
+  { name:'Rose',    metal:['#f0c4c0','#c47c76','#5f312e'], trim:'#ffe4e1', stars:2, plate:'#2a1717' },
+  { name:'Jade',    metal:['#bfe3d4','#6fa892','#2f5247'], trim:'#e4fff5', stars:3, plate:'#132420' },
+  { name:'Opal',    metal:['#e4d7f2','#a58bc4','#4c3a63'], trim:'#f7efff', stars:4, plate:'#1d1729' },
+  { name:'Ruby',    metal:['#f0c0b4','#b8564a','#5a1f18'], trim:'#ffe0d8', stars:5, plate:'#29100d' }
+];
+const otterModel = serial => OTTER_MODELS[(Math.max(1,Math.min(LIMITED_DROPS, Number(serial)||1)) - 1) % OTTER_MODELS.length];
+
+function otterBackHTML(serial, stateName, ownerLabel){
+  const m = otterModel(serial);
+  const stars = '\u2605'.repeat(m.stars) + '\u2606'.repeat(5 - m.stars);
+  return `<div class="otter-card oc-back" data-slot="${serial}" data-model="${m.name.toLowerCase()}"
+      style="--oc-a:${m.metal[0]};--oc-b:${m.metal[1]};--oc-c:${m.metal[2]};--oc-trim:${m.trim};--oc-plate:${m.plate}">
+    <div class="oc-shine"></div>
+    <div class="oc-back-mark">BAOBABIS</div>
+    <div class="oc-back-serial">#${serial}</div>
+    <div class="oc-back-state">${esc(stateName || 'FREE')}</div>
+    <div class="oc-back-model">${m.name}<span class="oc-stars">${stars}</span></div>
+    ${ownerLabel ? `<div class="oc-back-owner">${esc(ownerLabel)}</div>` : ''}
+  </div>`;
+}
+
 function otterCardHTML(slot, opts={}){
   const s = slot || {};
   const serial = Math.max(1, Math.min(LIMITED_DROPS, Number(s.serial) || 1));
   const owner = slotOwnerLabel(s);
   const reveal = !!opts.reveal;
   const code = s.code || ('OTTER-' + serial);
-  return `<div class="otter-card" data-slot="${serial}">
+  const m = otterModel(serial);
+  const stars = '\u2605'.repeat(m.stars) + '\u2606'.repeat(5 - m.stars);
+  return `<div class="otter-card" data-slot="${serial}" data-model="${m.name.toLowerCase()}"
+      style="--oc-a:${m.metal[0]};--oc-b:${m.metal[1]};--oc-c:${m.metal[2]};--oc-trim:${m.trim};--oc-plate:${m.plate}">
+    <div class="oc-shine"></div>
     <div class="oc-title">Otter Original</div>
     <div class="oc-frame"><img src="${PHOTOS[OTTER_PHOTO] || PHOTOS[FALLBACK_PHOTO]}" alt="Otter" loading="lazy"></div>
     <div class="oc-tier">Otter</div>
+    <div class="oc-model">${m.name}<span class="oc-stars">${stars}</span></div>
     <div class="oc-num">#${serial} / ${LIMITED_DROPS}</div>
     <div class="oc-owner">${owner ? esc(owner) : 'Personalised card'}</div>
     <div class="oc-dm">${reveal ? dmSVG(code) : '<span class="lock">'+LOCK_SVG+'</span>'}</div>
@@ -2171,10 +2255,42 @@ $$('#cardsRow .gcard').forEach(c=>c.addEventListener('click',lockedToast));
 
 /* ================= INVENTORY ================= */
 let filter='all';
+/* the ten serials live on the Cards page: owned ones show the nickname, free ones can be taken here */
+function renderOtterSlots(){
+  const host = $('#otterGrid'); if(!host) return;
+  let html = '';
+  for(let i=1;i<=LIMITED_DROPS;i++){
+    const s = slots[String(i)] || null;
+    const mine = !!(s && s.uid && s.uid === UID);
+    const ownedItem = state.items.find(it=>it.tier==='Otter' && Number(it.serial) === i);
+    const isMine = mine || !!ownedItem;
+    const model = otterModel(i);
+    const data = isMine
+      ? { serial:i, code:(s && s.code) || (ownedItem && ownedItem.code) || ('OTTER-'+i),
+          owner:(s && s.owner) || (ownedItem && ownedItem.owner) || (ownedItem && ownedItem.nick ? '@'+ownedItem.nick : null),
+          nick:(s && s.nick) || (ownedItem && ownedItem.nick) }
+      : { serial:i, owner:null };
+    const held = tasks.active && tasks.active.id==='otter' && Number(tasks.active.serial)===i;
+    const ownerLabel = s ? (s.owner || (s.nick ? '@'+s.nick : 'reserved')) : null;
+    const face = isMine ? otterCardHTML(data, { reveal: true })
+                        : otterBackHTML(i, held ? 'YOURS' : (s ? 'TAKEN' : 'FREE'), s ? ownerLabel : null);
+    const cap = isMine
+      ? `<b>#${i} · ${model.name}</b><span>${esc(data.owner || 'you')}</span>`
+      : `<b>#${i} · ${model.name}</b><span>${s ? esc(ownerLabel) : (held ? 'held for you' : 'free serial')}</span>`;
+    html += `<div class="otter-slot ${isMine?'mine':(s?'held':'locked')} ${held?'heldnow':''}" data-otter-slot="${i}">
+      ${face}
+      <div class="oc-cap">${cap}</div>
+      ${!isMine && !s ? `<button class="oc-take" data-take-slot="${i}">Take card #${i}</button>` : ''}
+    </div>`;
+  }
+  host.innerHTML = html;
+}
+
 function renderInventory(){
   const grid=$('#invGrid');
+  renderOtterSlots();
   state.items = sanitizeItems(state.items);
-  const items=state.items.filter(it=> filter==='all'?true: it.tier===filter);
+  const items=state.items.filter(it=> it.tier!=='Otter').filter(it=> filter==='all'?true: it.tier===filter);
   if(!items.length){
     grid.innerHTML=`<div class="inv-empty">
       <span class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18"/><circle cx="8.5" cy="6" r="0.9" fill="currentColor" stroke="none"/></svg></span>
@@ -2189,6 +2305,37 @@ function renderInventory(){
   }).join('')+slot();
 }
 const slot=()=>`<div class="slot">Empty slot<br>spin the wheel</div>`;
+
+$('#otterGrid').addEventListener('click',e=>{
+  const take = e.target.closest('[data-take-slot]');
+  if(take){ haptic('light'); openClaim('otter'); return; }
+  const wrap = e.target.closest('[data-otter-slot]'); if(!wrap) return;
+  const i = Number(wrap.dataset.otterSlot);
+  const s = slots[String(i)] || null;
+  const owned = state.items.find(it=>it.tier==='Otter' && Number(it.serial)===i);
+  if(!owned && !(s && s.uid === UID)) return;                       /* never reveal somebody else's card */
+  const it = owned || { id:'slot-'+i, code:(s&&s.code)||('OTTER-'+i), tier:'Otter', num:i, serial:i,
+    photo:OTTER_PHOTO, value:OTTER_PRICE, ts:(s&&s.at)||Date.now(), origin:'Otter drop', limited:true,
+    owner:(s&&s.owner)||null, nick:(s&&s.nick)||null };
+  const model = otterModel(i);
+  $('#imCard').innerHTML = cardHTML(it, { mini:true }, true);
+  $('#imKicker').textContent = 'OTTER DROP · CARD #' + i + ' OF ' + LIMITED_DROPS;
+  $('#imName').textContent = 'Otter · ' + model.name + ' model';
+  const when = new Date(it.ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  $('#imMeta').textContent = when + ' · ' + (it.origin || 'Otter drop');
+  const row=(k,v)=>`<div class="spec"><span>${k}</span><b>${v}</b></div>`;
+  $('#imSpecs').innerHTML = row('Model', model.name + ' · ' + '\u2605'.repeat(model.stars))
+    + row('Serial', '#' + i + ' / ' + LIMITED_DROPS)
+    + row('Owner', 'You · ' + esc(it.owner || (it.nick ? '@'+it.nick : USER ? '@'+USER.name : 'Baobabis')))
+    + row('Data Matrix', '<span class="dm-code">'+esc(it.code)+'</span>');
+  $('#imDm').innerHTML = dmSVG(it.code);
+  $('#imDm').onclick=(ev)=>{ ev.stopPropagation(); $('#dmZoom').innerHTML=dmSVG(it.code); $('#dmZoomCode').textContent=it.code; openOverlay('#dmOverlay'); };
+  $('#imFastSell').disabled = true; $('#imToList').disabled = true;
+  const hint = $('#imSellHint');
+  if(hint) hint.innerHTML = 'Personalised card — only you own serial #' + i + ', so it cannot be sold or listed.';
+  openOverlay('#itemOverlay');
+  haptic('light');
+});
 
 $('#invGrid').addEventListener('click',e=>{
   const card=e.target.closest('[data-item]'); if(!card) return;
@@ -2245,8 +2392,10 @@ function renderStats(){
 
 $('#clearInv').addEventListener('click',()=>{
   if(!state.items.length){ toast('Inventory is already empty','gray'); return; }
-  if(confirm('Clear the whole collection?')){
-    state.items=[]; save(); renderInventory(); renderStats(); renderShop(); toast('Inventory cleared'); haptic('warn');
+  const keep = state.items.filter(it=> it.tier==='Otter' || isLimited(it));
+  if(confirm('Clear the whole collection?' + (keep.length ? ' Your ' + keep.length + ' personalised Otter card(s) stay.' : ''))){
+    state.items=keep.slice(); save(); renderInventory(); renderStats(); renderShop();
+    toast(keep.length ? ('Inventory cleared · ' + keep.length + ' personalised card kept') : 'Inventory cleared'); haptic('warn');
   }
 });
 $$('#invChips .chip').forEach(c=>c.addEventListener('click',()=>{
@@ -3435,5 +3584,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Otter drop: ' + Math.max(0, LIMITED_DROPS-slotsTaken()) + ' of ' + LIMITED_DROPS + ' personalised cards are free'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58d68d4e870588e',t:'MTc5NDQwMTI4OA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58d68d4e870588e',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58d8ac7ed573b63',t:'MTc5NDQwMjY3OQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58d8ac7ed573b63',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
