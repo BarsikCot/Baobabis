@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="93b975d1">
+<meta name="build" content="5581396a">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -2873,6 +2873,28 @@ async function pullBoard(){
   }catch(e){}
 }
 
+/* ================= AUTO UPDATE (Telegram webview caches aggressively) ================= */
+const BUILD = (document.querySelector('meta[name="build"]')||{}).content || 'dev';
+function checkForUpdate(retry){
+  if(location.protocol !== 'http:' && location.protocol !== 'https:') return;   /* file:// preview */
+  fetch('version.json?t=' + Date.now(), { cache:'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => {
+      if(!j || !j.build || j.build === BUILD) return;
+      const key = 'baobabis.reloaded.' + j.build;
+      if(sessionStorage.getItem(key)){                 /* already tried once for this build */
+        toast('Update ready — reopen the app to load it', 'gray');
+        return;
+      }
+      sessionStorage.setItem(key, '1');
+      const url = location.pathname + '?v=' + encodeURIComponent(j.build) + (location.hash || '');
+      location.replace(url);
+    })
+    .catch(()=>{ if(!retry) setTimeout(()=>checkForUpdate(true), 4000); });
+}
+setTimeout(()=>checkForUpdate(false), 1200);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkForUpdate(true); });
+
 /* ================= TOAST ================= */
 function toast(msg,cls=''){
   const el=document.createElement('div');
@@ -2924,5 +2946,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bbbd15e123dd3',t:'MTc5NDM4MzcxNg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bbbd15e123dd3',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bcfe2d97c87ca',t:'MTc5NDM4NDUzOA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bcfe2d97c87ca',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
