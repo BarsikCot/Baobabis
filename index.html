@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="14f09a76">
+<meta name="build" content="998b53d4">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -1650,35 +1650,66 @@ function mountSkinViewer(stageEl, canvasEl){
 setTimeout(()=>{ if(skinReady && !TILES.length) buildTiles(); }, 60);
 
 /* ================= MINECRAFT PROFILE ================= */
+/* ---- nickname -> UUID -> skin texture ------------------------------------------------
+   The Mojang profile endpoints (api.mojang.com / sessionserver.mojang.com) do not send CORS
+   headers, so a page on baobabis.p7z.ru cannot read them directly. Order of resolution:
+     1. PlayerDB  — CORS *, gives uuid + texture, but its texture can be stale (it served a
+        months-old skin while Mojang had the new one), so it is only a fallback source;
+     2. Visage (surgeplay) — CORS *, proxy over Mojang, always the current texture;
+   Whatever we get is cross-checked against every source we can reach: if ANY source shows the
+   reward skin, the check passes (a stale mirror can then never block a legitimate player), and if
+   every source is unreachable we say so instead of pretending the skin is wrong. */
+const SKIN_SOURCES = [
+  { id:'visage',     url:(id,name)=> 'https://visage.surgeplay.com/skin/' + id,          needs:'uuid' },
+  { id:'playerdb',   url:(id,name)=> null,                                               needs:'meta' },
+  { id:'mc-heads',   url:(id,name)=> 'https://mc-heads.net/skin/' + encodeURIComponent(name), needs:'name' },
+  { id:'minotar',    url:(id,name)=> 'https://minotar.net/skin/' + encodeURIComponent(name),  needs:'name' }
+];
+
+async function uuidFor(name){
+  try{
+    const r = await fetch('https://api.mojang.com/users/profiles/minecraft/' + encodeURIComponent(name), { cache:'no-store' });
+    if(r.ok){ const j = await r.json(); if(j && j.id) return { id:j.id, source:'mojang' }; }
+  }catch(e){}
+  try{
+    const r = await fetch('https://playerdb.co/api/player/minecraft/' + encodeURIComponent(name), { cache:'no-store' });
+    if(r.ok){
+      const j = await r.json();
+      const p = j && j.data && j.data.player;
+      if(p && p.raw_id) return { id:p.raw_id, source:'playerdb', skin:p.skin_texture || null, name:p.username || name };
+    }
+  }catch(e){}
+  return null;
+}
+
 async function resolveProfile(nick){
   const name = (nick||'').trim();
   if(!/^[A-Za-z0-9_]{3,16}$/.test(name)) throw new Error('Nickname must be 3–16 letters, digits or _');
-  const out = { name, uuid:null, skinUrl:null, skinHash:null };
-  try{
-    const r = await fetch('https://api.mojang.com/users/profiles/minecraft/'+encodeURIComponent(name));
-    if(r.ok){ const j = await r.json(); if(j && j.id) out.uuid = j.id; }
-  }catch(e){}
-  if(!out.uuid){
-    const r2 = await fetch('https://playerdb.co/api/player/minecraft/'+encodeURIComponent(name));
-    if(r2.ok){ const j2 = await r2.json(); out.uuid = j2?.data?.player?.raw_id || null; out.skinUrl = j2?.data?.player?.skin_texture || null; }
+  const found = await uuidFor(name);
+  if(!found || !found.id) throw new Error('Player not found — check the nickname');
+
+  const out = { name: found.name || name, uuid: found.id, skinUrl:null, skinHash:null, sources:[], checked:0 };
+  const urls = [];
+  if(found.skin) urls.push({ id:'playerdb', url:found.skin });
+  /* the proxy that always mirrors the live Mojang texture */
+  urls.push({ id:'visage', url:'https://visage.surgeplay.com/skin/' + found.id });
+  urls.push({ id:'mc-heads', url:'https://mc-heads.net/skin/' + encodeURIComponent(out.name) });
+  urls.push({ id:'minotar',  url:'https://minotar.net/skin/' + encodeURIComponent(out.name) });
+
+  const hashes = [];
+  for(const src of urls){
+    try{
+      const hash = await skinPixelHash(src.url);
+      out.checked++;
+      hashes.push({ id:src.id, url:src.url, hash });
+      if(!out.skinUrl){ out.skinUrl = src.url; out.skinHash = hash; }
+    }catch(e){ /* source unreachable — just skip it */ }
   }
-  if(!out.uuid) throw new Error('Player not found — check the nickname');
-  if(!out.skinUrl){
-    const r3 = await fetch('https://sessionserver.mojang.com/session/minecraft/profile/'+out.uuid);
-    if(r3.ok){
-      const j3 = await r3.json();
-      const prop = (j3.properties||[]).find(p=>p.name==='textures');
-      if(prop){
-        try{ const dec = JSON.parse(atob(prop.value)); out.skinUrl = dec?.textures?.SKIN?.url || null; }catch(e){}
-      }
-    }
-  }
-  if(out.skinUrl){
-    try{ out.skinHash = await skinPixelHash(out.skinUrl); }
-    catch(e){ out.skinHash = null; out.skinError = 'texture'; }      /* CORS / offline: not a mismatch */
-  }
+  out.allHashes = hashes;
+  if(!out.checked){ out.skinError = 'unreachable'; }
   return out;
 }
+
 /* ---- skin comparison -------------------------------------------------------------
    Comparing the raw PNG bytes was wrong: every re-upload (LabY, a launcher, Mojang's own
    re-encode) writes the same picture with different bytes. What matters is the pixels:
@@ -1774,8 +1805,8 @@ const TASK_DEFS = {
     hours:24,
     verify: async (nick)=>{
       const p = await resolveProfile(nick);
-      const ok = !!p.skinHash && (p.skinHash === SKIN_PIXEL_SHA || p.skinHash === SKIN_SHA);
-      return { ok, profile:p, unreachable: !p.skinHash };
+      const matches = (p.allHashes || []).filter(x => x.hash === SKIN_PIXEL_SHA || x.hash === SKIN_SHA);
+      return { ok: matches.length > 0, profile:p, unreachable: !p.checked, matchedBy: matches.map(x=>x.id) };
     }
   },
   'spin-lim': {
@@ -2785,17 +2816,19 @@ async function runClaim(id, wantedSerial){
         else if(infoImg){ infoImg.style.display = 'none'; }
         if(infoTxt) infoTxt.innerHTML = txt;
       };
-      if(prof.unreachable || (!prof.skinUrl && !prof.skinHash)){
+      if(!prof.checked){
         /* the texture could not be downloaded (CORS / CDN / offline) — this is NOT a mismatch */
         msg.innerHTML = '<b>We could not read the skin right now.</b> Nothing was changed — press the button again in a moment.';
         showSkin('Skin texture could not be downloaded. This is a network problem on our side, not a skin mismatch.');
         btn.disabled = false;
         return;
       }
-      const matches = prof.skinHash === SKIN_PIXEL_SHA || prof.skinHash === SKIN_SHA;
+      const matched = (prof.allHashes || []).filter(x => x.hash === SKIN_PIXEL_SHA || x.hash === SKIN_SHA);
+      const matches = matched.length > 0;
       if(!matches){
         msg.innerHTML = '<b>That skin is not the reward skin.</b> Below is the texture we read for <b style="color:#fff">' + nick + '</b> — equip the downloaded skin in Minecraft, save it, and press the button again.';
-        showSkin('Read from Minecraft for <b style="color:#fff">' + nick + '</b>. It must match the pink Baobabis skin byte-for-byte in pixels (64×64, Slim).');
+        showSkin('Read for <b style="color:#fff">' + nick + '</b> from ' + prof.checked + ' source' + (prof.checked===1?'':'s')
+          + ' (' + (prof.allHashes||[]).map(x=>x.id).join(', ') + '). All of them must show the pink Baobabis skin.');
         btn.disabled = false;
         return;
       }
@@ -3729,5 +3762,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Otter drop: ' + Math.max(0, LIMITED_DROPS-slotsTaken()) + ' of ' + LIMITED_DROPS + ' personalised cards are free'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58daab0dd43c6a0',t:'MTc5NDQwMzk4Ng=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58daab0dd43c6a0',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
