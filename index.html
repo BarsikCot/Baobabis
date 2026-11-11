@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="fef92789">
+<meta name="build" content="05637a46">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -556,6 +556,20 @@ input,select,textarea{font-size:16px}
   color:var(--oc-trim);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .oc-back .oc-dm{right:6%;bottom:5%;opacity:.5}
 
+/* ================= SERIAL PICKER ================= */
+.serial-pick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.serial-chip{position:relative;min-height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:#0b0b0b;
+  color:#dcdcdc;font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.04em;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 2px}
+.serial-chip em{font-style:normal;font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.7}
+.serial-chip.free{border-color:rgba(255,255,255,.4);color:#fff}
+.serial-chip.active{background:#fff;color:#000;border-color:#fff}
+.serial-chip.active em{opacity:.75}
+.serial-chip.mine{opacity:.5}
+.serial-chip.taken{opacity:.32;cursor:not-allowed;text-decoration:line-through}
+.serial-chip:disabled{cursor:not-allowed}
+@media (max-width:340px){ .serial-pick{grid-template-columns:repeat(4,minmax(0,1fr))} }
+
 /* ================= OTTER LIMITED CARD ================= */
 .otter-card{position:relative;width:100%;aspect-ratio:200/267;border-radius:10px;overflow:hidden;
   background:linear-gradient(172deg,var(--oc-a,#a89e92) 0%,var(--oc-b,#8b8175) 54%,var(--oc-c,#68604f) 100%);
@@ -1010,8 +1024,9 @@ input,select,textarea{font-size:16px}
         </button>
       </div>
       <div class="btn-row" style="margin-top:8px">
-        <button class="btn btn-white" id="previewClaim">How to claim</button>
+        <button class="btn btn-white" id="previewClaim">Take a card</button>
       </div>
+      <div class="hint" style="margin-top:8px" id="mySerialsHint">—</div>
     </div>
 
     <div class="section" style="padding-top:20px">
@@ -1676,13 +1691,28 @@ const LIMITED_DROPS = 10;
 let slots = {};                             /* { "1": {serial, nick, owner, code, uid, at}, ... } */
 const mySlots = () => Object.keys(slots).map(k=>Object.assign({serial:Number(k)}, slots[k]))
   .filter(s=>s.uid && s.uid === UID);
-/* a slot is free when nobody owns it, or when it is mine / my nickname */
+/* a slot is free when nobody owns it, or when it is mine / my nickname (ids arrive as numbers
+   from Firebase, so everything is compared as a string) */
+const isMineSlot = s => !!s && s.uid != null && String(s.uid) === String(UID);
 function slotFree(serial, nick){
   const s = slots[String(serial)];
   if(!s) return true;
-  if(s.uid ? s.uid === UID : (nick && s.nick === nick)) return true;      /* already mine */
+  if(isMineSlot(s)) return true;                                          /* already mine */
+  if(nick && s.nick === nick) return true;
   return false;
 }
+/* every serial this player already owns (cloud registry + local collection) */
+function mySerials(){
+  const set = new Set();
+  Object.keys(slots).forEach(k=>{ if(isMineSlot(slots[k])) set.add(Number(k)); });
+  state.items.forEach(it=>{ if(it.tier === 'Otter' && it.serial) set.add(Number(it.serial)); });
+  return [...set].sort((a,b)=>a-b);
+}
+const freeSerials = () => {
+  const mine = mySerials();
+  return Array.from({length:LIMITED_DROPS}, (_,i)=>i+1).filter(n => mine.indexOf(n) < 0 && slotFree(n));
+};
+const heldSerial = () => (tasks.active && tasks.active.id === 'otter') ? Number(tasks.active.serial) : 0;
 const slotsTaken = () => Object.keys(slots).filter(k=>slots[k] && slots[k].uid).length;
 async function pullSlots(){
   try{
@@ -2308,7 +2338,7 @@ const slot=()=>`<div class="slot">Empty slot<br>spin the wheel</div>`;
 
 $('#otterGrid').addEventListener('click',e=>{
   const take = e.target.closest('[data-take-slot]');
-  if(take){ haptic('light'); openClaim('otter'); return; }
+  if(take){ haptic('light'); openClaim('otter', Number(take.dataset.takeSlot)); return; }
   const wrap = e.target.closest('[data-otter-slot]'); if(!wrap) return;
   const i = Number(wrap.dataset.otterSlot);
   const s = slots[String(i)] || null;
@@ -2603,6 +2633,14 @@ function renderTasks(){
     }
     slotHost.innerHTML = html;
   }
+  const myHint = $('#mySerialsHint');
+  if(myHint){
+    const mine = mySerials();
+    const free = freeSerials().length;
+    myHint.innerHTML = (mine.length ? 'Yours: <b style="color:#fff">' + mine.map(n=>'#'+n).join(', ') + '</b> · ' : '')
+      + (free ? free + ' of ' + LIMITED_DROPS + ' serials still free — take as many as you can hold'
+              : 'all serials are taken right now');
+  }
   const heroCard = $('#heroOtterCard');
   if(heroCard && !heroCard.innerHTML) heroCard.innerHTML = otterCardHTML({serial:1, owner:null}, {reveal:false});
 }
@@ -2615,35 +2653,73 @@ setInterval(()=>{
 }, 1000);
 
 /* ================= CLAIM FLOW ================= */
-function openClaim(id){
+function freeSerialChips(){
+  /* every serial, with the state that matters: free / yours / somebody else's */
+  let html = '';
+  for(let i=1;i<=LIMITED_DROPS;i++){
+    const s = slots[String(i)];
+    const mine = isMineSlot(s) || state.items.some(it=>it.tier==='Otter' && Number(it.serial)===i);
+    const held = heldSerial() === i;
+    const taken = !!s && !mine;
+    const cls = mine ? 'mine' : (taken ? 'taken' : 'free');
+    const dis = (taken || mine || held) ? 'disabled' : '';
+    html += `<button class="serial-chip ${cls}" data-pick-serial="${i}" ${dis}
+      title="${taken ? 'taken by ' + esc(s.owner || s.nick || 'a player') : (mine ? 'already yours' : 'free serial')}">
+      #${i}${held ? ' <em>hold</em>' : (mine ? ' <em>yours</em>' : (taken ? '' : ' <em>free</em>'))}</button>`;
+  }
+  return html;
+}
+
+function openClaim(id, preselectSerial){
   const t = TASK_DEFS[id];
   const st = taskState(id);
   const body = $('#claimBody');
+  const freeNow = freeSerials();
+  const myOwned = mySerials();
+  const wanted = Number(preselectSerial) || (st && st.rec && Number(st.rec.serial)) || freeNow[0] || 0;
   body.innerHTML = `
-    <div class="kicker" style="justify-content:center">Task · drop ${(tasks.drops||0)+1} of ${LIMITED_DROPS}</div>
+    <div class="kicker" style="justify-content:center;padding:0 26px">Otter drop · ${freeNow.length} free of ${LIMITED_DROPS}</div>
     <h3 style="margin-top:8px;text-align:center">${t.title}</h3>
     <p class="sub" style="margin-top:8px;text-align:center;font-size:12.5px">${t.desc}</p>
     <div class="skin-stage" id="claimStage" style="margin-top:14px;height:200px">
       <span class="glowring"></span><canvas id="claimCanvas"></canvas><span class="hintrot">Drag to rotate</span>
     </div>
-    <div style="margin-top:14px">
+    <div style="margin-top:12px">
+      <div class="hint" style="text-align:left;margin-bottom:6px">Pick a free serial <b style="color:#fff" id="pickSerialLabel">#${wanted || '—'}</b></div>
+      <div class="serial-pick" id="serialPick">${freeSerialChips()}</div>
+      ${myOwned.length ? `<div class="hint" style="text-align:left;margin-top:8px">You already own: <b style="color:#fff">${myOwned.map(n=>'#'+n).join(', ')}</b> — pick any other free serial and start a new 24 h task for it.</div>` : ''}
+      ${freeNow.length ? '' : '<div class="hint" style="text-align:left;margin-top:8px"><b style="color:#fff">All serials are taken.</b> You can still take a serial the moment somebody releases it.</div>'}
+    </div>
+    <div style="margin-top:12px">
       <div class="hint" style="text-align:left;margin-bottom:6px">Minecraft nickname</div>
       <input id="nickInput" class="redeem-in" style="width:100%;text-align:left;letter-spacing:.02em" placeholder="e.g. Notch" value="${tasks.nick||''}" autocomplete="off" spellcheck="false">
       <div class="hint" id="claimMsg" style="text-align:left;margin-top:8px">We only read your public skin. Nothing is uploaded.</div>
       <button class="mini-btn ghost" id="claimDownload" style="width:100%;margin-top:10px;min-height:38px">Download the skin PNG</button>
     </div>
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-white" id="claimGo">${id==='otter' ? 'Check skin · hold my card for 24 h' : 'Claim reward'}</button>
+      <button class="btn btn-white" id="claimGo" ${freeNow.length ? '' : 'disabled style="opacity:.45"'}>${id==='otter' ? ('Check skin · hold card #' + (wanted || '—') + ' for 24 h') : 'Claim reward'}</button>
     </div>
     ${id==='otter' ? `<div class="roul-wrap" style="margin-top:6px"><div class="hint" style="text-align:center;margin-top:10px">Skin on now = card held for 24 hours. Not on when the countdown ends = the nickname is released and anyone can take that serial.</div></div>` : ''}
   `;
   openOverlay('#claimOverlay');
   if(window.__claimViewer && window.__claimViewer.stop) window.__claimViewer.stop();
   window.__claimViewer = mountSkinViewer($('#claimStage'), $('#claimCanvas'));
-  $('#claimGo').addEventListener('click', ()=> runClaim(id));
+  /* serial picker: any free number can be chosen, not just the lowest one */
+  let pickedSerial = wanted;
+  const pick = $('#serialPick');
+  if(pick) pick.addEventListener('click', e=>{
+    const b = e.target.closest('[data-pick-serial]'); if(!b || b.disabled) return;
+    pickedSerial = Number(b.dataset.pickSerial);
+    $$('#serialPick .serial-chip').forEach(c=>c.classList.toggle('active', Number(c.dataset.pickSerial)===pickedSerial));
+    const lab = $('#pickSerialLabel'); if(lab) lab.textContent = '#' + pickedSerial;
+    const go = $('#claimGo'); if(go) go.textContent = 'Check skin · hold card #' + pickedSerial + ' for 24 h';
+    haptic('light');
+  });
+  $$('#serialPick .serial-chip').forEach(c=>{ if(Number(c.dataset.pickSerial)===pickedSerial) c.classList.add('active'); });
+  $('#claimGo').addEventListener('click', ()=> runClaim(id, pickedSerial));
 }
 
-async function runClaim(id){
+async function runClaim(id, wantedSerial){
   const t = TASK_DEFS[id];
   const msg = $('#claimMsg');
   const nick = ($('#nickInput').value||'').trim();
@@ -2652,10 +2728,12 @@ async function runClaim(id){
   try{
     if(id==='otter'){
       if(!/^[A-Za-z0-9_]{3,16}$/.test(nick)) throw new Error('Enter a valid Minecraft nickname');
-      const used = tasks.drops || 0;
-      if(used >= LIMITED_DROPS){ throw new Error('All ' + LIMITED_DROPS + ' Otter cards are taken'); }
-      const serial = used + 1;
-      if(!slotFree(serial, nick)) throw new Error('Card #' + serial + ' already belongs to another player');
+      await pullSlots();                                   /* never start on stale slot data */
+      let serial = Number(wantedSerial) || freeSerials()[0] || 0;
+      if(!serial) throw new Error('All ' + LIMITED_DROPS + ' Otter cards are taken');
+      if(!slotFree(serial, nick)) serial = freeSerials()[0] || 0;   /* the picked one got taken meanwhile */
+      if(!serial) throw new Error('Card just got taken — no free serial left');
+      if(state.items.some(it=>it.tier==='Otter' && Number(it.serial)===serial)) throw new Error('You already own card #' + serial);
       tasks.nick = nick;
       const prof = await resolveProfile(nick);
       if(!prof.skinHash) throw new Error('Could not read the skin texture');
@@ -2702,42 +2780,51 @@ async function verifyRunningTask(){
 }
 
 /* the serial of the card is also the number of the slot it occupies (1..10) */
-function claimLimited(nick){
+function claimLimited(nick, wantedSerial){
   const n = (nick || tasks.nick || '').trim();
   if(!n){ toast('Enter your Minecraft nickname first','gray'); haptic('warn'); return; }
-  const serial = tasks.drops || 0;
-  if(serial >= LIMITED_DROPS){ toast('All ' + LIMITED_DROPS + ' Otter cards are taken','gray'); haptic('warn'); return; }
-  if(!slotFree(serial + 1, n)){ toast('That slot is taken by another player','gray'); haptic('warn'); return; }
-  const code = limitedCodeFor(n + '-' + (serial + 1));
-  tasks.drops = serial + 1;
-  tasks.codes = (tasks.codes || []).concat([code]);
-  tasks.limitedClaimed = tasks.drops >= LIMITED_DROPS;
-  tasks.limitedCode = code;
-  tasks.history = (tasks.history||[]).filter(x => x.id !== 'otter');
-  if(tasks.limitedClaimed) tasks.history.push({ id:'otter', status:'claimed', at:Date.now(), nick:n });
-  tasks.active = null;
-  saveTasks();
-  /* the slot is personalised: serial + owner go to the public drop list */
-  const mySlot = { serial: serial + 1, code, nick: n, owner: '@' + n, uid: UID, card: 'Otter', status:'claimed', at: Date.now() };
-  slots[String(serial + 1)] = mySlot;
-  FB.write('/limited/slots/' + (serial + 1), mySlot);
+  let serial = Number(wantedSerial) || (tasks.active && Number(tasks.active.serial)) || 0;
+  if(!serial) serial = freeSerials()[0] || 0;                        /* first free serial */
+  const hasItem = s => state.items.some(it => it.tier === 'Otter' && Number(it.serial) === s);
+  if(!serial || serial < 1 || serial > LIMITED_DROPS){ toast('All ' + LIMITED_DROPS + ' Otter cards are taken','gray'); haptic('warn'); return; }
+  if(!slotFree(serial, n)){ toast('Card #' + serial + ' belongs to another player — pick a free one','gray'); haptic('warn'); return; }
+  if(hasItem(serial) && isMineSlot(slots[String(serial)]) && !(tasks.active && Number(tasks.active.serial) === serial)){
+    toast('You already own card #' + serial + ' — pick another serial','gray'); haptic('warn'); return;
+  }
+  const code = limitedCodeFor(n + '-' + serial);
 
-  const item = { id:'c-'+Date.now().toString(36), code, tier:'Otter', num:serial + 1, photo:OTTER_PHOTO,
-    value:OTTER_PRICE, ts:Date.now(), origin:'Otter drop', limited:true, serial: serial + 1, owner: n, nick: n };
-  EXTRA_CARDS.push({ code, tier:'Otter', num:serial + 1, photo:OTTER_PHOTO, limited:true });
-  state.items.unshift(item);
-  save(); renderInventory(); renderStats(); renderShop();
+  /* the serial is now claimed by this player */
+  const mySlot = { serial, code, nick: n, owner: '@' + n, uid: UID, card: 'Otter', status:'claimed', at: Date.now() };
+  slots[String(serial)] = mySlot;
+  FB.write('/limited/slots/' + serial, mySlot);
+
+  const item = { id:'c-'+Date.now().toString(36), code, tier:'Otter', num:serial, photo:OTTER_PHOTO,
+    value:OTTER_PRICE, ts:Date.now(), origin:'Otter drop', limited:true, serial, owner: n, nick: n };
+  if(!state.items.some(it=>it.tier==='Otter' && Number(it.serial)===serial)) state.items.unshift(item);
+  if(!byCode(code)) EXTRA_CARDS.push({ code, tier:'Otter', num:serial, photo:OTTER_PHOTO, limited:true });
+
+  /* one task = one serial: clear it, the player may start the next serial right away */
+  tasks.active = null;
+  tasks.pendingSerial = 0;
+  tasks.nick = '';
+  tasks.drops = mySerials().length;
+  tasks.limitedClaimed = tasks.drops >= LIMITED_DROPS;
+  tasks.codes = (tasks.codes || []).concat([code]);
+  tasks.limitedCode = code;
+  if(tasks.limitedClaimed) tasks.history = (tasks.history||[]).filter(x=>x.id!=='otter').concat([{ id:'otter', status:'claimed', at:Date.now(), nick:n }]);
+  saveTasks();
+  save(); renderInventory(); renderStats(); renderShop(); renderTasks();
 
   $('#limCard').innerHTML = otterCardHTML(item, { reveal:true });
   $('#limDmTile').innerHTML = dmSVG(code);
-  $('#limDmCode').textContent = code + ' · Otter #' + (serial + 1) + ' of ' + LIMITED_DROPS + ' · ' + n;
-  const dn = $('#limDropNo'); if(dn) dn.textContent = serial + 1;
-  const sr = $('#limSerial'); if(sr) sr.textContent = '#' + (serial + 1) + ' / ' + LIMITED_DROPS;
+  $('#limDmCode').textContent = code + ' · Otter #' + serial + ' of ' + LIMITED_DROPS + ' · ' + n;
+  const dn = $('#limDropNo'); if(dn) dn.textContent = serial;
+  const sr = $('#limSerial'); if(sr) sr.textContent = '#' + serial + ' / ' + LIMITED_DROPS;
   const own = $('#limOwner'); if(own) own.textContent = '@' + n;
   closeAll();
   confetti('Platinum');
   setTimeout(()=>{ openOverlay('#limitedOverlay'); haptic('ok'); }, 160);
-  renderTasks();
+  toast('Card #' + serial + ' is yours · ' + freeSerials().length + ' serials still free');
 }
 
 /* ================= CANCEL TASK ================= */
@@ -3584,5 +3671,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Otter drop: ' + Math.max(0, LIMITED_DROPS-slotsTaken()) + ' of ' + LIMITED_DROPS + ' personalised cards are free'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58d8ac7ed573b63',t:'MTc5NDQwMjY3OQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58d8ac7ed573b63',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58d9ed27a61aa14',t:'MTc5NDQwMzQ5OQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58d9ed27a61aa14',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
