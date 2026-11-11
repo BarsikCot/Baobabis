@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="0571b9a8">
+<meta name="build" content="32e78836">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -476,9 +476,12 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .sell-row .btn{flex:1;min-height:44px;font-size:12.5px;border-radius:12px}
 .btn-sell{background:#fff;color:#000;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
 .btn-list{background:#111;color:#fff;border:1px solid var(--line2)}
-.price-in{height:44px;border-radius:12px;border:1px solid var(--line2);background:#0b0b0b;color:#fff;
-  padding:0 12px;font-family:ui-monospace,Menlo,monospace;font-size:14px;letter-spacing:.08em;text-align:center;
+.price-in{height:46px;border-radius:12px;border:1px solid var(--line2);background:#0b0b0b;color:#fff;
+  padding:0 12px;font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.08em;text-align:center;
   width:100%;min-width:0}
+/* 16px is the smallest size iOS Safari will focus WITHOUT zooming the page in */
+input,select,textarea{font-size:16px}
+@media (max-width:360px){ .price-in,.redeem-in{font-size:16px} }
 .price-in:focus{outline:none;border-color:#fff}
 .mk-item{display:flex;align-items:center;gap:11px;padding:10px;border-radius:15px;border:1px solid var(--line);
   background:var(--card);text-align:left;margin-bottom:8px;transition:border-color .25s,background .25s}
@@ -521,6 +524,10 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .eco-note .ic svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .eco-note p{font-size:11.5px;line-height:1.55;color:var(--muted)}
 .eco-note p b{color:#fff}
+
+/* ================= DATA MATRIX ZOOM ================= */
+.dm-zoom-tile{width:min(200px,58vw);aspect-ratio:1/1;background:#fff;border-radius:16px;padding:14px;margin:12px auto 10px}
+@supports not (aspect-ratio: 1/1){ .dm-zoom-tile{height:min(200px,58vw)} }
 
 /* ================= COMPACT ITEM SHEET ================= */
 .overlay{padding:10px}
@@ -659,7 +666,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
             <circle cx="22" cy="2.5" r="2.3" fill="#fff"/>
           </svg>
         </span>
-        <div class="fs-tx"><b>Free Spin</b><span>Free · <b id="homeSpins">1</b> spin left</span></div>
+        <div class="fs-tx"><b>Free Spin</b><span><b id="homeSpins">1</b> spin ready · 1,500 B each after that</span></div>
         <button class="btn btn-white btn-sm" data-go="spin" style="width:auto">Spin</button>
       </div>
 
@@ -795,7 +802,8 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
       <div class="tile locked" id="dmHeroTile"><span class="lock"></span></div>
       <div class="dm-code" id="dmHeroCode">Hidden until you own a code</div>
       <form id="redeemForm" style="display:flex;gap:8px;margin-top:12px;width:100%">
-        <input id="redeemInput" class="redeem-in" inputmode="text" autocomplete="off" spellcheck="false"
+        <input id="redeemInput" class="redeem-in" type="text" inputmode="text" autocomplete="off"
+               autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done"
                placeholder="e.g. C7vN" maxlength="8" aria-label="Data Matrix code">
         <button class="btn btn-white btn-sm" type="submit" style="min-width:96px">Activate</button>
       </form>
@@ -820,8 +828,8 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
       <div class="rv d2" style="margin-top:14px">
         <div class="pack">
           <div class="pi">↻</div>
-          <div class="pt"><b>+3 free spins</b><span>Extra wheel spins, no cards included</span></div>
-          <div class="pp"><b>149 B</b><button data-buy="spins">Buy</button></div>
+          <div class="pt"><b>+3 extra spins</b><span>Each spin costs 1,500 B — the pack is exactly 3 × 1,500</span></div>
+          <div class="pp"><b id="packSpinsPrice">4,500 B</b><button data-buy="spins">Buy</button></div>
         </div>
         <div class="pack">
           <div class="pi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 7.5-8"/><path d="M14.5 3H21v6.5"/></svg></div>
@@ -866,12 +874,14 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
         <button class="chip active" data-mk="all">All</button>
         <button class="chip" data-mk="mine">My lots</button>
         <button class="chip" data-mk="Basic">Basic</button>
+        <button class="chip" data-mk="Rare">Rare</button>
         <button class="chip" data-mk="Epic">Epic</button>
         <button class="chip" data-mk="Mythic">Mythic</button>
         <button class="chip" data-mk="Platinum">Platinum</button>
         <button class="chip" data-mk="Legendary">Legendary</button>
       </div>
-      <div class="rv d2" id="mkList" style="margin-top:12px;text-align:left"></div>
+      <div class="hint rv d2" id="mkSync" style="margin-top:10px;text-align:left">Loading listings…</div>
+      <div class="rv d2" id="mkList" style="margin-top:10px;text-align:left"></div>
     </div>
 
     <div class="rule"></div>
@@ -884,7 +894,8 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
         <button class="chip active" data-lb="value">By value</button>
         <button class="chip" data-lb="count">By cards</button>
       </div>
-      <div class="rv d2" id="lbList" style="margin-top:12px;text-align:left"><div class="lb-empty">Loading players…</div></div>
+      <div class="hint rv d2" id="lbSync" style="margin-top:10px;text-align:left">Loading players…</div>
+      <div class="rv d2" id="lbList" style="margin-top:10px;text-align:left"><div class="lb-empty">Loading players…</div></div>
       <div class="eco-note rv d3">
         <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17.5 9 11l4 4 7.5-8"/><path d="M14.5 3H21v6.5"/></svg></span>
         <p><b>Cards are the only currency.</b> Balance is earned by selling originals — quick sell or your own price on the market. Spend it in the shop on Data Matrix codes.</p>
@@ -1032,7 +1043,10 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <div class="btn-row" style="margin-top:8px">
       <button class="btn btn-dark" id="dupCash">Take <span id="dupCashVal">0 B</span></button>
     </div>
-    <div class="hint" style="margin-top:10px">Re-spin is free and does not use a spin</div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-dark" id="dupKeep">Keep a spare copy · <span id="dupKeepVal">0 B</span></button>
+    </div>
+    <div class="hint" style="margin-top:10px">Re-spin is free and does not use a spin. A spare copy sits in your collection and can be sold once.</div>
   </div>
 </div>
 
@@ -1063,7 +1077,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 <div class="overlay" id="dmOverlay">
   <div class="sheet" style="max-width:360px">
     <button class="x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    <div style="width:220px;height:220px;background:#fff;border-radius:16px;padding:16px;margin:14px auto 12px" id="dmZoom"></div>
+    <div class="dm-zoom-tile" id="dmZoom"></div>
     <h3 style="font-size:18px">Data Matrix</h3>
     <p class="desc dm-code" style="margin-bottom:0" id="dmZoomCode">—</p>
   </div>
@@ -1688,7 +1702,7 @@ function animateWheel(duration, turns, wobble, done){
 function spin(multOverride){
   if(spinning) return;
   const mult = (MULT_TIERS.indexOf(Number(multOverride)) >= 0) ? Number(multOverride) : spinMult;
-  if(state.spins < mult){ toast('Need ' + mult + ' spins — you have ' + state.spins, 'gray'); haptic('warn'); return; }
+  if(state.spins < mult){ haptic('warn'); askBuySpins(mult); return; }
   spinning = true;
   state.spins -= mult;
   save(); renderStats();
@@ -1734,7 +1748,7 @@ function spin(multOverride){
 /* quick spin: several rolls at once, best card goes to the collection, the rest cash out */
 function onQuickDrop(results, boosts){
   state.spinsMade += results.length;
-  const payout = p => Math.floor((PRICE[p.tier] || 0) * 0.35 * (p.mult || 1));
+  const payout = p => Math.floor((PRICE[p.tier] || 0) * 0.35 * (p.mult || 1));  /* unused fallback */
   const candidates = results.map((tier, i)=>{
     const tpl = pick(cardsOfTier(tier));
     return { id:'c-'+Date.now().toString(36)+i.toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier,
@@ -1746,15 +1760,19 @@ function onQuickDrop(results, boosts){
   const sorted = candidates.slice().sort((a,b)=> rank(b.tier) - rank(a.tier));
   const best = sorted.find(c=>!owned.has(c.code)) || sorted[0];
   const rest = candidates.filter(c=>c !== best);
-  const refund = rest.reduce((s,c)=> s + Math.floor((PRICE[c.tier]||0)*0.35), 0);
+  const refund = rest.reduce((s,c)=> s + Math.floor((PRICE[c.tier]||0) * (owned.has(c.code) ? 0.5 : 0.35)), 0);
 
   if(owned.has(best.code)){
-    /* even the best one is a duplicate -> the usual duplicate choice */
-    state.spins += results.length;             /* whole roll refunded as spins */
-    save(); renderStats();
-    setStatus('done','Duplicate: '+best.tier);
-    haptic('warn');
-    showDuplicate(best);
+    /* every card of the roll is already owned: give the best one as a SPARE copy (collect it later)
+       and pay the rest out, so a roll never turns into "money only" by default */
+    const spare = spareCopyOf(best);
+    state.items.unshift(spare);
+    state.balance += refund;
+    save(); renderInventory(); renderStats(); renderShop();
+    setStatus('done','Quick ×'+results.length+' · spare '+best.code+(refund?(' +'+fmt(refund)+' B'):''));
+    haptic('ok');
+    showQuickWin(best, results, refund);
+    toast('Every card was owned — the best one was added as a spare copy');
     return;
   }
   state.items.unshift(best);
@@ -1813,11 +1831,27 @@ function onDrop(tier){
 
 /* ================= DUPLICATE DROP ================= */
 let pendingDupe = null;
-const dupeRefund = it => Math.max(1, Math.floor((PRICE[it.tier] || it.value || 0) * 0.5));
+/* 50 % of the card's price is the default, but a player who already owns a card may keep a
+   SPARE copy — the same original can only be sold / listed once, so this never breaks the market */
+const DUPE_KEEP_PRICE = it => Math.max(1, Math.floor((PRICE[it.tier] || it.value || 0) * 0.5));
+const dupeRefund = DUPE_KEEP_PRICE;
+function spareCopyOf(it){
+  return { id:'c-'+Date.now().toString(36)+rnd(9999).toString(36), code:it.code, tier:it.tier, num:it.num,
+           photo:it.photo, value:PRICE[it.tier] || it.value, ts:Date.now(), origin:'Duplicate drop',
+           dup:true, sourceId: it.sourceId || it.id };
+}
 
 function showDuplicate(item){
   const tpl = byCode(item.code) || item;
   pendingDupe = item;
+  const keepBtn = $('#dupKeep');
+  if(keepBtn){
+    const cost = DUPE_KEEP_PRICE(item);
+    const affordable = state.balance >= cost;
+    keepBtn.disabled = !affordable;
+    const val = $('#dupKeepVal'); if(val) val.textContent = fmt(cost) + ' B';
+    keepBtn.style.opacity = affordable ? '1' : '.45';
+  }
   $('#dupCard').innerHTML = cardHTML(tpl, {}, true);
   $('#dupTier').textContent = item.tier;
   $('#dupPrice').textContent = fmt(PRICE[item.tier] || item.value) + ' B';
@@ -1838,19 +1872,63 @@ function dupeCashOut(){
   toast('Duplicate converted · +' + fmt(gain) + ' B');
   haptic('ok');
 }
+/* keep the same original as a spare: pays half of its price, the copy can be sold later */
+function dupeKeep(){
+  if(!pendingDupe) return;
+  const cost = DUPE_KEEP_PRICE(pendingDupe);
+  if(state.balance < cost){ toast('Not enough B to keep a spare','gray'); haptic('warn'); return; }
+  const copy = spareCopyOf(pendingDupe);
+  state.balance -= cost;
+  state.items.unshift(copy);
+  pendingDupe = null;
+  save(); renderStats(); renderInventory(); renderShop();
+  closeAll();
+  toast('Spare copy kept · -' + fmt(cost) + ' B');
+  haptic('ok');
+}
 function dupeRespin(){
   pendingDupe = null;
   state.spins += 1;                       /* the re-spin is free */
   save(); renderStats();
   closeAll();
-  toast('Free re-spin — good luck');
+  const missing = CARDS.filter(c=>!ownedCodes().has(c.code)).length;
+  toast(missing ? ('Free re-spin — ' + missing + ' original' + (missing===1?'':'s') + ' still unowned')
+                : 'Free re-spin — you own every original, so the wheel pays out in cards you resell');
   haptic('light');
   setTimeout(()=>{ if(!spinning) spin(); }, 320);
 }
 function enableBtn(){
   const b=$('#spinBtn');
-  b.disabled = state.spins<=0 || spinning;
-  b.textContent = state.spins>0 ? 'Spin for free' : 'No spins — buy a booster';
+  if(!b) return;
+  b.disabled = !!spinning;                     /* buying a spin happens from this same button */
+  b.textContent = spinning ? 'Spinning…'
+    : (state.spins >= spinMult ? 'Spin'
+       : (state.spins > 0 ? 'Need ' + spinMult + ' spins · 1,500 B each' : 'Buy a spin · 1,500 B'));
+}
+/* buying spins from the wheel: one confirmation, no hidden charges */
+function askBuySpins(mult){
+  const need = Math.max(1, mult - state.spins);
+  const cost = need * SPIN_PRICE;
+  const body = $('#claimBody');
+  body.innerHTML = `
+    <div class="kicker" style="justify-content:center">Spin booster</div>
+    <h3 style="margin-top:8px;text-align:center">${need} spin${need===1?'':'s'} · ${fmt(cost)} B</h3>
+    <p class="sub" style="margin-top:8px;text-align:center">One spin costs ${fmt(SPIN_PRICE)} B. Your balance: ${fmt(state.balance)} B.</p>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-white" id="buySpinsGo" ${state.balance < cost ? 'disabled style="opacity:.45"' : ''}>Buy for ${fmt(cost)} B</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px"><button class="btn btn-dark" data-close>Cancel</button></div>
+    ${state.balance < cost ? '<div class="hint" style="margin-top:10px">Not enough B — sell a card in the market first.</div>' : ''}`;
+  openOverlay('#claimOverlay');
+  const go = $('#buySpinsGo');
+  if(go) go.addEventListener('click', ()=>{
+    if(state.balance < cost){ toast('Not enough B','gray'); haptic('warn'); return; }
+    state.balance -= cost;
+    state.spins += need;
+    save(); renderStats();
+    closeAll();
+    toast('+'+need+' spin'+(need===1?'':'s')+' · -'+fmt(cost)+' B'); haptic('ok');
+  });
 }
 
 /* ================= QUICK SPIN UI ================= */
@@ -1910,7 +1988,7 @@ $$('#qsOpts .qs-opt').forEach(b=>{
   b.dataset.mult = b.dataset.mult;
   b.addEventListener('click', ()=>{
     const m = Number(b.dataset.mult);
-    if(state.spins < m){ toast('You need ' + m + ' spins — spin more first', 'gray'); haptic('warn'); return; }
+    if(state.spins < m){ haptic('warn'); askBuySpins(m); return; }
     setSpinMult(m);
   });
 });
@@ -2014,7 +2092,8 @@ $('#invGrid').addEventListener('click',e=>{
     hint.innerHTML='Physical limited drop — trading is disabled for this card.';
     $('#imFastSell').disabled=true; $('#imToList').disabled=true;
   }else{
-    hint.innerHTML='Quick sell <b style="color:#fff">'+fmt(quick)+' B</b> instantly · market price from '+fmt(floor)+' B';
+    hint.innerHTML='Quick sell <b style="color:#fff">'+fmt(quick)+' B</b> instantly · market price from '+fmt(floor)+' B'
+      + (it.dup ? '<br><b style="color:#fff">Spare copy</b> — you already own this original, this one is for selling.' : '');
     $('#imFastSell').disabled=false; $('#imToList').disabled=false;
     $('#imFastSell').onclick=()=>{ closeAll(); doFastSell(it.id); };
     $('#imToList').onclick=()=>{ closeAll(); openListSheet(it.id); };
@@ -2061,12 +2140,13 @@ function renderShop(){
   const list=CARDS.filter(c=> shopFilter==='all'?true:c.tier===shopFilter);
   grid.innerHTML=list.map(c=>{
     const isOwned=owned.has(c.code);
+    const canSpare=isOwned && !state.items.some(i=>i.code===c.code && i.dup);
     return `<div class="shop-item ${isOwned?'owned':''}" data-shopcard="${c.code}">
       ${isOwned?'<span class="own-badge">Owned</span>':''}
       ${cardHTML(c,{mini:true},isOwned)}
       <button class="buy" data-tiercode="${c.code}">
-        ${isOwned?'<em>In collection</em>':'<em>Data Matrix</em>'}
-        <span>${isOwned?'✓':fmt(PRICE[c.tier])+' B'}</span>
+        <em>${isOwned ? (canSpare ? 'Spare copy' : 'In collection') : 'Data Matrix'}</em>
+        <span>${isOwned ? (canSpare ? fmt(PRICE[c.tier])+' B' : '✓') : fmt(PRICE[c.tier])+' B'}</span>
       </button>
     </div>`;
   }).join('');
@@ -2095,30 +2175,34 @@ function openDmPreview(code){
 function buyCard(code){
   const tpl=byCode(code);
   const price=PRICE[tpl.tier];
-  if(ownedCodes().has(code)){ toast('You already own this original','gray'); return; }
+  const owned = ownedCodes().has(code);
+  if(owned && state.items.some(i=>i.code===code && i.dup)){ toast('You already own this original and a spare','gray'); return; }
   if(state.balance<price){ toast('Not enough B — top up balance','gray'); haptic('warn'); return; }
   state.balance-=price;
   state.items.unshift({ id:'c-'+Date.now().toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num, photo:tpl.photo,
-    value:PRICE[tpl.tier], ts:Date.now(), origin:'Data Matrix purchase' });
+    value:PRICE[tpl.tier], ts:Date.now(), origin: owned ? 'Data Matrix purchase (spare)' : 'Data Matrix purchase',
+    dup: owned || undefined });
   save(); renderInventory(); renderStats(); renderShop();
   heroCode=code;
   $('#dmHeroTile').classList.remove('locked');
   $('#dmHeroTile').innerHTML=dmSVG(code)+'<div class="dm-scan"></div>';
   $('#dmHeroCode').textContent=code+' · '+tpl.tier+' #'+tpl.num;
-  toast('Paid '+fmt(price)+' B · '+tpl.tier+' #'+tpl.num); haptic('ok');
+  toast('Paid '+fmt(price)+' B · '+tpl.tier+' #'+tpl.num+(owned?' (spare)':'')); haptic('ok');
   showWin(state.items[0]);
 }
 
-const PACKS={ spins:{price:149, spins:3} };
+/* one free spin costs SPIN_PRICE B · a booster of 3 costs exactly 3× (no discount, no hidden fee) */
+const SPIN_PRICE = 1500;
+const PACKS={ spins:{price:SPIN_PRICE*3, spins:3} };
 $$('[data-buy]').forEach(b=>b.addEventListener('click',()=>{
   const k=b.dataset.buy, p=PACKS[k];
   if(!p) return;
-  if(p.price && state.balance<p.price){ toast('Not enough B','gray'); haptic('warn'); return; }
+  if(p.price && state.balance<p.price){ toast('Not enough B — 3 spins cost '+fmt(p.price)+' B','gray'); haptic('warn'); return; }
   state.balance-=p.price;
   if(p.spins) state.spins+=p.spins;
   if(p.topup) state.balance+=p.topup;
   save(); renderStats(); renderShop();
-  toast(p.spins?('+'+p.spins+' free spins'):('+'+fmt(p.topup)+' B added')); haptic('ok');
+  toast(p.spins?('+'+p.spins+' spins'):('+'+fmt(p.topup)+' B added')); haptic('ok');
 }));
 
 /* ================= FAQ ================= */
@@ -2137,7 +2221,7 @@ $('#spinBtn').addEventListener('click', ()=>spin());
 $('#hubBtn').addEventListener('click', ()=>spin());
 $('#winAgain').addEventListener('click',()=>{
   closeAll();
-  if(state.spins>0) setTimeout(spin,300); else toast('No spins left','gray');
+  if(state.spins>0) setTimeout(spin,300); else askBuySpins(spinMult);
 });
 let heroCode=null;
 $('#dmHeroTile').addEventListener('click',()=>{
@@ -2405,6 +2489,8 @@ const DB = 'https://pasha-pasha-ee-default-rtdb.firebaseio.com';
 const cloudPath = (suffix='')=> DB + '/players/' + encodeURIComponent(UID) + suffix + '.json';
 
 let pushTimer = 0, pushInFlight = false, pushDirty = false;
+let cloudPulled = false;         /* true only after a successful read of this account */
+let cloudShadow = null;          /* last copy we know is safe in the cloud */
 function pushCloud(){
   if(!cloudReady) return;
   pushDirty = true;
@@ -2413,6 +2499,24 @@ function pushCloud(){
 }
 async function flushCloud(){
   if(pushInFlight || !pushDirty) return;
+  /* a device that never managed to READ the profile must never WRITE over it */
+  if(!cloudPulled){
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(()=>{ pushDirty = true; syncProfile().catch(()=>{}); }, 2500);
+    return;
+  }
+  /* if the cloud holds a clearly richer profile, the local copy was emptied by accident:
+     take the cloud copy instead of overwriting it */
+  if(cloudShadow && state.items.length < (cloudShadow.items||0) && state.balance < (cloudShadow.balance||0)){
+    state.items = sanitizeItems(cloudShadow.itemsList || []);
+    state.balance = Number(cloudShadow.balance) || 0;
+    tasks = sanitizeTasks(cloudShadow.tasks || tasks, tasks);
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
+    renderInventory(); renderStats(); renderShop(); renderTasks(); renderMarket(); renderLeaderboard();
+    toast('Progress restored from the cloud');
+    closeAll();
+    return;
+  }
   pushInFlight = true; pushDirty = false;
   const payload = {
     profile: USER ? { id:USER.id, name:USER.name, username:USER.username, photo:USER.photo, lang:USER.lang, premium:USER.premium } : { id:UID, name:'Browser guest' },
@@ -2422,7 +2526,8 @@ async function flushCloud(){
     tg: IS_TG
   };
   try{
-    await fetch(cloudPath(), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const res = await fetch(cloudPath(), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(res && res.ok) cloudShadow = { items: state.items.length, balance: state.balance, itemsList: state.items, tasks };
   }catch(e){}
   pushBoard();
   pushInFlight = false;
@@ -2430,11 +2535,11 @@ async function flushCloud(){
 }
 async function pullCloud(){
   try{
-    const r = await fetch(cloudPath() + '?ts=' + Date.now());
-    if(!r.ok) return null;
+    const r = await fetch(cloudPath() + '?ts=' + Date.now(), { cache:'no-store' });
+    if(!r.ok) return { ok:false, data:null };
     const j = await r.json();
-    return j && typeof j === 'object' ? j : null;
-  }catch(e){ return null; }
+    return { ok:true, data: (j && typeof j === 'object') ? j : null };
+  }catch(e){ return { ok:false, data:null }; }
 }
 /* one-shot reset shipped with the 10-drop release: every account starts the drop chain fresh */
 function migrateDropSchema(cloud){
@@ -2449,6 +2554,8 @@ function migrateDropSchema(cloud){
   state.items = state.items.filter(it => !(it.limited || it.origin === 'Limited drop'));
   for(let i = EXTRA_CARDS.length-1; i >= 0; i--){ if(EXTRA_CARDS[i].limited) EXTRA_CARDS.splice(i,1); }
   saveTasks();
+  /* mark the account as migrated in the cloud right away, otherwise the reset would repeat on every load */
+  try{ fetch(cloudPath(), { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ schema: DROP_SCHEMA, updatedAt: Date.now() }) }).catch(()=>{}); }catch(e){}
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
   return true;
 }
@@ -2472,6 +2579,8 @@ function sanitizeItems(list){
       ts: Number(raw.ts) || Date.now(),
       origin: typeof raw.origin === 'string' ? raw.origin : 'Free spin',
       limited: !!raw.limited || !!(tpl && tpl.limited),
+      dup: !!raw.dup || undefined,                     /* spare copy of an original already owned */
+      sourceId: raw.sourceId ? String(raw.sourceId) : undefined,
       creator: (raw.creator && typeof raw.creator === 'object') ? raw.creator : undefined,
       originUid: raw.originUid || undefined
     });
@@ -2493,8 +2602,22 @@ function sanitizeTasks(t, fallback){
   return out;
 }
 
+/* older builds could leave two rows of the same original; the spare one gets the dup flag so it can
+   always be sold, instead of becoming an unsellable, unbuyable stranded row */
+function rescueStrandedDuplicates(){
+  const seen = new Set();
+  state.items.forEach(it=>{
+    if(seen.has(it.code)) it.dup = true; else seen.add(it.code);
+  });
+}
+
 async function syncProfile(){
-  const cloud = await pullCloud();
+  const pull = await pullCloud();
+  cloudPulled = !!pull.ok;
+  const cloud = pull.data;
+  if(!pull.ok && !cloudReady){ /* offline / blocked: keep local data, try again soon */
+    setTimeout(()=>{ if(!cloudReady) syncProfile().catch(()=>{}); }, 4000);
+  }
   const migrated = migrateDropSchema(cloud);
   if(migrated){
     toast('Drop progress reset — 10 Platinum cards are up for grabs');
@@ -2503,6 +2626,7 @@ async function syncProfile(){
     const remoteNewer = (cloud.updatedAt||0) > 0;
     // progress: prefer the copy that has more activity, so a fresh device never wipes a real account
     const remoteItems = (cloud.state && Array.isArray(cloud.state.items)) ? cloud.state.items.length : 0;
+    const remoteBal = Number((cloud.state && cloud.state.balance) || 0);
     const localItems = state.items.length;
     if(remoteNewer && (remoteItems >= localItems || !localItems)){
       if(cloud.state) state = Object.assign({balance:0, spins:1, spinsMade:0, items:[]}, cloud.state);
@@ -2517,9 +2641,11 @@ async function syncProfile(){
       try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
     }
   }
+  cloudShadow = cloud ? { items: ((cloud.state && cloud.state.items) || []).length,
+                          balance: Number((cloud.state && cloud.state.balance) || 0),
+                          itemsList: (cloud.state && cloud.state.items) || [], tasks: cloud.tasks || null } : cloudShadow;
   cloudReady = true;
   if(migrated){
-    try{ fetch(DB + '/limited.json', { method:'DELETE' }).catch(()=>{}); }catch(e){}
     await claimPayouts();
     flushCloud();
   }
@@ -2527,6 +2653,7 @@ async function syncProfile(){
   state.balance = Number(state.balance) || 0;
   state.spins = Number(state.spins) || 0;
   state.items = sanitizeItems(state.items);
+  rescueStrandedDuplicates();
   tasks = sanitizeTasks(tasks, { nick: tasks.nick, limitedClaimed: tasks.limitedClaimed });
   try{ localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
   renderInventory(); renderShop(); renderStats(); renderTasks();
@@ -2662,21 +2789,49 @@ async function claimPayouts(){
   return 1;
 }
 
+let marketSync = { at:0, ok:null };
+/* a lot that could not be written to the cloud stays queued and is retried, so the card is never lost */
+function pendingLots(){ try{ const j = JSON.parse(localStorage.getItem('baobabis.pendinglots.v1')||'[]'); return Array.isArray(j)?j:[]; }catch(e){ return []; } }
+function setPendingLots(list){ try{ localStorage.setItem('baobabis.pendinglots.v1', JSON.stringify(list)); }catch(e){} }
+function queueLot(id, lot){ const l = pendingLots().filter(x=>x.id!==id); l.push({ id, lot }); setPendingLots(l); }
+function unqueueLot(id){ setPendingLots(pendingLots().filter(x=>x.id!==id)); }
+async function flushPendingLots(){
+  const list = pendingLots();
+  if(!list.length) return;
+  for(const rec of list){
+    try{
+      const r = await fetch(DB + '/market/' + rec.id + '.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rec.lot) });
+      if(r && r.ok) unqueueLot(rec.id); else break;
+    }catch(e){ break; }
+  }
+}
 async function pullMarket(){
   try{
-    const r = await fetch(DB + '/market.json?ts=' + Date.now());
-    if(!r.ok) return;
+    const r = await fetch(DB + '/market.json?ts=' + Date.now(), { cache:'no-store' });
+    if(!r.ok){ marketSync = { at:Date.now(), ok:false }; renderMarket(); return; }
     const j = await r.json();
     market = (j && typeof j === 'object') ? j : {};
+    /* keep our own lots even if the cloud write is still in flight */
     saveMarketCache();
+    marketSync = { at:Date.now(), ok:true };
+    flushPendingLots();
     renderMarket();
-  }catch(e){}
+  }catch(e){
+    marketSync = { at:Date.now(), ok:false };
+    renderMarket();
+  }
 }
 function renderMarket(){
   const list = Object.keys(market).map(id=>Object.assign({ id }, market[id]))
     .filter(l=>l && l.code && byCode(l.code))
     .sort((a,b)=> (b.at||0) - (a.at||0));
   const count=$('#mkCount'), mineList=$('#mkMine'), items=$('#mkItems');
+  const syncEl = $('#mkSync');
+  if(syncEl){
+    if(marketSync.ok === null) syncEl.textContent = 'Loading listings from the cloud…';
+    else if(!marketSync.ok) syncEl.innerHTML = '<b style="color:#fff">Cloud unreachable</b> — showing the listings saved on this device. Pull to open the tab again to retry.';
+    else syncEl.textContent = 'Live · ' + list.filter(l=>l.uid!==UID).length + ' lot' + (list.filter(l=>l.uid!==UID).length===1?'':'s') + ' from other players · updated ' + timeAgo(marketSync.at);
+  }
   if(count) count.textContent = list.length;
   if(mineList) mineList.textContent = list.filter(l=>l.uid===UID).length;
   if(items) items.textContent = state.items.length;
@@ -2719,7 +2874,7 @@ function refreshSellSelect(){
   sel.innerHTML = sellable.length
     ? sellable.map(it=>{
         const tpl = byCode(it.code) || it;
-        return `<option value="${it.id}">Gamlet ${it.tier} #${it.num} · ${it.code} — quick sell ${fmt(fastSellPrice(it))} B</option>`;
+        return `<option value="${it.id}">Gamlet ${it.tier} #${it.num} · ${it.code}${it.dup?' · spare':''} — quick sell ${fmt(fastSellPrice(it))} B</option>`;
       }).join('')
     : '<option value="">Collection is empty — nothing to sell</option>';
   if(sellable.some(it=>it.id===keep)) sel.value = keep;
@@ -2751,7 +2906,9 @@ function openListSheet(itemId){
     <div style="display:flex;justify-content:center;margin-top:14px;max-width:170px;margin-left:auto;margin-right:auto">${cardHTML(tpl,{mini:true},true)}</div>
     <div style="margin-top:16px;text-align:left">
       <div class="hint" style="margin-bottom:6px">Your price in B · quick sell now would pay ${fmt(fastSellPrice(it))} B</div>
-      <input id="listPrice" class="price-in" inputmode="numeric" autocomplete="off" value="${it.value}" aria-label="Price">
+      <input id="listPrice" class="price-in" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="7"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             enterkeyhint="done" value="${it.value}" aria-label="Price in B">
       <div class="hint" style="margin-top:6px">Any amount from 1 B. Cards near this tier go for ${fmt(PRICE[tpl.tier])} B.</div>
     </div>
     <div class="btn-row" style="margin-top:14px">
@@ -2761,6 +2918,13 @@ function openListSheet(itemId){
       <button class="btn btn-dark" data-close>Cancel</button>
     </div>`;
   openOverlay('#claimOverlay');
+  /* the price field must not push the layout around while the keyboard is open */
+  const pi = $('#listPrice');
+  if(pi){
+    pi.addEventListener('input', ()=>{ pi.value = pi.value.replace(/[^0-9]/g,'').slice(0,7); });
+    pi.addEventListener('focus', ()=>{ try{ pi.select(); }catch(e){} });   /* replace the default instead of appending */
+    pi.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); pi.blur(); } });
+  }
   $('#listGo').addEventListener('click', async ()=>{
     const raw = Math.round(Number((''+$('#listPrice').value).replace(/[^0-9]/g,'')));
     if(!raw || raw < 1){ toast('Enter a price of at least 1 B','gray'); haptic('warn'); return; }
@@ -2783,8 +2947,12 @@ function openListSheet(itemId){
     closeAll();
     toast('Listed for '+fmt(raw)+' B'); haptic('ok');
     try{
-      await fetch(DB + '/market/' + id + '.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(lot) });
-    }catch(e){}
+      const r = await fetch(DB + '/market/' + id + '.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(lot) });
+      if(!r || !r.ok){ queueLot(id, lot); toast('Saved on this device — will publish when the cloud is back','gray'); }
+    }catch(e){
+      queueLot(id, lot);
+      toast('Saved on this device — will publish when the cloud is back','gray');
+    }
     pullMarket();
   });
 }
@@ -2866,11 +3034,18 @@ function renderLeaderboard(){
   const seen = new Set();
   for(let i=rows.length-1;i>=0;i--){ if(seen.has(rows[i].uid)) rows.splice(i,1); else seen.add(rows[i].uid); }
   rows.sort((a,b)=> lbMode==='value' ? (b.value-a.value) || (b.cards-a.cards) : (b.cards-a.cards) || (b.value-a.value));
+  const lbSyncEl = $('#lbSync');
+  if(lbSyncEl){
+    if(boardSync.ok === null) lbSyncEl.textContent = 'Loading players from the cloud…';
+    else if(!boardSync.ok) lbSyncEl.innerHTML = '<b style="color:#fff">Cloud unreachable</b> — this list is what your device remembers. Reopen the tab to retry.';
+    else lbSyncEl.textContent = 'Live · ' + rows.length + ' player' + (rows.length===1?'':'s') + ' · updated ' + timeAgo(boardSync.at);
+  }
 
   if(!rows.length){
     host.innerHTML = '<div class="lb-empty">No collectors yet.<br>Spin a card and take the first place.</div>';
     return;
   }
+  /* the player's own row is written by pushBoard; if the cloud refused, say so instead of hiding them */
   host.innerHTML = rows.slice(0, 25).map((r,i)=>{
     const initials = (r.name||'?').trim().charAt(0).toUpperCase();
     const isMe = r.uid === UID;
@@ -2913,15 +3088,20 @@ if(fsBtn2) fsBtn2.addEventListener('click', ()=>{
 });
 const dupBtnA = $('#dupRespin'); if(dupBtnA) dupBtnA.addEventListener('click', dupeRespin);
 const dupBtnB = $('#dupCash');   if(dupBtnB) dupBtnB.addEventListener('click', dupeCashOut);
-/* closing the sheet without choosing must never throw the drop away: it cashes out quietly */
+/* closing the duplicate sheet must not silently hand out money — the spin is simply returned */
 const dupOverlayEl = $('#dupOverlay');
 if(dupOverlayEl) dupOverlayEl.addEventListener('click', e=>{
   if(!pendingDupe) return;
   if(e.target.closest('[data-close]') || e.target === dupOverlayEl){
     e.stopPropagation(); e.preventDefault();
-    dupeCashOut();
+    pendingDupe = null;
+    state.spins += 1;
+    save(); renderStats();
+    closeAll();
+    toast('Spin returned — nothing lost');
   }
 }, true);
+const dupKeepBtn = $('#dupKeep'); if(dupKeepBtn) dupKeepBtn.addEventListener('click', dupeKeep);
 const fsSel = $('#fsSelect');
 if(fsSel) fsSel.addEventListener('change', ()=>{
   const it = state.items.find(x=>x.id===fsSel.value); if(!it) return;
@@ -2945,14 +3125,19 @@ function pushBoard(){
   fetch(DB + '/board/' + encodeURIComponent(UID) + '.json',
     { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(entry) }).catch(()=>{});
 }
+let boardSync = { at:0, ok:null };
 async function pullBoard(){
   try{
-    const r = await fetch(DB + '/board.json?ts=' + Date.now());
-    if(!r.ok) return;
+    const r = await fetch(DB + '/board.json?ts=' + Date.now(), { cache:'no-store' });
+    if(!r.ok){ boardSync = { at:Date.now(), ok:false }; renderLeaderboard(); return; }
     const j = await r.json();
     board = (j && typeof j === 'object') ? j : {};
+    boardSync = { at:Date.now(), ok:true };
     renderLeaderboard();
-  }catch(e){}
+  }catch(e){
+    boardSync = { at:Date.now(), ok:false };
+    renderLeaderboard();
+  }
 }
 
 /* ================= NO DOUBLE-TAP ZOOM ================= */
@@ -3071,5 +3256,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58c017fbf6cb7b8',t:'MTc5NDM4NjU3MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58c017fbf6cb7b8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58c1f1a8da913b8',t:'MTc5NDM4Nzc4Mg=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58c1f1a8da913b8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
