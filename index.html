@@ -53,13 +53,20 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
 .topbar{position:fixed;top:0;left:0;right:0;z-index:60;padding-top:var(--safe-t);
   background:rgba(0,0,0,.82);backdrop-filter:blur(20px) saturate(120%);-webkit-backdrop-filter:blur(20px) saturate(120%);
   border-bottom:1px solid var(--line)}
-.topbar-in{max-width:560px;margin:0 auto;height:56px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.topbar-in{max-width:560px;margin:0 auto;height:56px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;letter-spacing:-.03em}
+.whoami{display:flex;align-items:center;gap:6px;height:32px;padding:0 8px 0 3px;border-radius:12px;flex:0 0 auto;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);max-width:110px;overflow:hidden}
+.top-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto;min-width:0}
+@media (max-width:359px){ .brand span:not(.brand-mark){display:none} }
+.whoami img,.whoami .ini{width:24px;height:24px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;
+  background:#1a1a1a;color:#fff;font-size:11px;font-weight:900;object-fit:cover}
+.whoami .nm{display:block;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;max-width:44px}
 .brand-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
   background:#fff;color:#000;font-weight:900;box-shadow:0 0 0 1px rgba(255,255,255,.5),0 0 24px rgba(255,255,255,.35)}
 .brand small{display:block;font-size:8.5px;letter-spacing:.15em;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:1px}
 .top-actions{display:flex;align-items:center;gap:8px}
-.pill-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:11px;
+.pill-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;white-space:nowrap;border-radius:11px;
   border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:800;
   transition:transform .2s var(--spring),background .2s,border-color .2s}
 .pill-btn:active{transform:scale(.94)}
@@ -73,7 +80,7 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
   background:#fff;color:#000;font-size:10px;font-weight:900;display:grid;place-items:center;
   transform:scale(0);transition:transform .3s var(--spring)}
 .icon-btn .badge.on{transform:scale(1)}
-.spin-top{display:flex;align-items:center;gap:7px;height:34px;padding:0 11px 0 7px;border-radius:11px;
+.spin-top{display:flex;align-items:center;gap:7px;height:34px;padding:0 10px 0 7px;white-space:nowrap;border-radius:11px;
   border:1px solid rgba(255,255,255,.42);background:linear-gradient(180deg,#161616,#000);
   font-weight:900;font-size:11.5px;position:relative;overflow:hidden;
   transition:transform .2s var(--spring),box-shadow .3s,border-color .3s;
@@ -105,6 +112,11 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
 
 
 /* ================= TASKS / LIMITED DROP ================= */
+.acct{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:11px;border:1px solid var(--line2);
+  background:#0c0c0c;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
+.acct b{color:#fff;font-weight:900}
+.acct .dotp{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.8s infinite}
+.acct.guest .dotp{background:#8a8a8a;animation:none}
 .lim-banner{margin-top:14px;border-radius:18px;padding:14px;border:1px solid var(--line2);
   background:radial-gradient(120% 120% at 12% 0%,#2a2a2a,#080808 62%);display:flex;gap:12px;align-items:center;
   position:relative;overflow:hidden;cursor:pointer}
@@ -411,10 +423,19 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .foot b{color:var(--muted);font-weight:800}
 .tg-hint{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10.5px;color:var(--muted2);letter-spacing:.06em;margin-top:10px}
 .tg-hint svg{width:13px;height:13px}
+@media(max-width:480px){
+  .whoami{padding:0 2px;max-width:32px}
+  .whoami .nm{display:none}
+}
+@media(max-width:374px){
+  .brand span:not(.brand-mark){display:none}
+  .brand{gap:0}
+}
 @media(max-width:410px){
   .brand small{display:none}
   .pill-btn{padding:0 9px;font-size:11.5px;gap:5px}
   .spin-top{padding:0 9px 0 6px;font-size:11px}
+  .topbar-in .icon-btn{display:none}
   .spin-top-ico,.spin-top-ico svg{width:19px;height:19px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -429,9 +450,10 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
   <div class="topbar-in">
     <a class="brand" href="#" data-go="home">
       <span class="brand-mark">B</span>
-      <span>Baobabis<small>Gamlet original</small></span>
+      <span>Baobabis</span>
     </a>
     <div class="top-actions">
+      <button class="whoami" id="whoami" aria-label="Account"></button>
       <button class="spin-top" data-go="spin" aria-label="Free Spin">
         <span class="spin-top-ico">
           <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -652,6 +674,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
       <div class="eyebrow rv"><i></i>Tasks</div>
       <h2 class="rv d1" style="margin-top:10px">Tasks &amp; drop</h2>
       <p class="sub rv d1" style="margin-top:8px">Complete a task, equip the reward skin in Minecraft and keep it for 24 hours. The site checks your skin and unlocks the only Gamlet Platinum physical card.</p>
+      <div class="acct rv d1" id="acctLine" style="margin-top:12px"></div>
     </div>
 
     <div class="card rv d2" style="margin-top:16px;text-align:center">
@@ -847,12 +870,29 @@ const TIER_ORDER = ['Basic','Rare','Epic','Mythic','Platinum','Legendary'];
 const PRICE = {Basic:390, Rare:690, Epic:990, Mythic:1490, Platinum:2190, Legendary:3990};
 const ORDER = ['Basic','Rare','Epic','Mythic','Platinum','Legendary','Basic','Rare','Epic','Mythic','Basic','Rare'];
 const SEG=ORDER.length, SEG_A=360/SEG;
-const KEY='baobabis.dm.v1';
+/* ================= IDENTITY (Telegram) ================= */
+const TGU = TG && TG.initDataUnsafe && TG.initDataUnsafe.user ? TG.initDataUnsafe.user : null;
+const USER = TGU ? {
+  id: TGU.id,
+  name: [TGU.first_name, TGU.last_name].filter(Boolean).join(' ') || TGU.username || ('id'+TGU.id),
+  username: TGU.username || null,
+  photo: TGU.photo_url || null,
+  lang: TGU.language_code || null,
+  premium: !!TGU.is_premium
+} : null;
+/* uid = telegram id when inside Telegram, otherwise a device id so the browser demo keeps working */
+const DEVICE_ID = (()=>{ try{ let d = localStorage.getItem('baobabis.device'); if(!d){ d = 'dev-' + Math.random().toString(36).slice(2,10); localStorage.setItem('baobabis.device', d); } return d; }catch(e){ return 'dev-anon'; } })();
+const UID = USER ? String(USER.id) : DEVICE_ID;
+const IS_TG = !!USER;
+
+const KEY='baobabis.dm.v1.'+UID;
+const TKEY='baobabis.tasks.v1.'+UID;
 
 let state = {balance:3000, spins:1, spinsMade:0, items:[]};
 try{ const raw=localStorage.getItem(KEY); if(raw) state=Object.assign(state,JSON.parse(raw)); }catch(e){}
 if(!Array.isArray(state.items)) state.items=[];
-const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+let cloudReady = false;
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} pushCloud(); };
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -1085,10 +1125,9 @@ async function sha256OfUrl(url){
 }
 
 /* ================= TASKS STATE ================= */
-const TKEY = 'baobabis.tasks.v1';
 let tasks = { nick:'', active:null, history:[], limitedClaimed:false, limitedCode:null, startedAt:0 };
 try{ const raw = localStorage.getItem(TKEY); if(raw) tasks = Object.assign(tasks, JSON.parse(raw)); }catch(e){}
-const saveTasks = ()=>{ try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){} };
+const saveTasks = ()=>{ try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){} pushCloud(); };
 function registerLimitedCard(){
   if(tasks.limitedClaimed && tasks.limitedCode && typeof byCode === 'function' && !byCode(tasks.limitedCode)){
     const base = CARDS.find(c=>c.code==='C7vN');
@@ -1612,7 +1651,7 @@ function claimLimited(nick){
   tasks.history.push({ id:'skin24', status:'claimed', at:Date.now(), nick:nick||tasks.nick });
   tasks.active = null;
   saveTasks();
-  FB.write('/limited', { code, nick: nick||tasks.nick||null, at: Date.now() });
+  FB.write('/limited', { code, nick: nick||tasks.nick||null, uid: UID, tg: IS_TG ? { id:USER.id, name:USER.name, username:USER.username } : null, at: Date.now() });
 
   const tpl = { code, tier:'Platinum', num:1, photo: byCode('C7vN').photo, limited:true };
   if(!byCode(code)) EXTRA_CARDS.push(tpl);
@@ -1660,6 +1699,99 @@ function downloadSkin(){
 $('#downloadSkin').addEventListener('click', downloadSkin);
 document.addEventListener('click', e=>{ if(e.target.closest('#claimDownload')) downloadSkin(); });
 
+/* ================= CLOUD PROFILE (Firebase RTDB, keyed by Telegram id) ================= */
+const DB = 'https://pasha-pasha-ee-default-rtdb.firebaseio.com';
+const cloudPath = (suffix='')=> DB + '/players/' + encodeURIComponent(UID) + suffix + '.json';
+
+let pushTimer = 0, pushInFlight = false, pushDirty = false;
+function pushCloud(){
+  if(!cloudReady) return;
+  pushDirty = true;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(flushCloud, 700);
+}
+async function flushCloud(){
+  if(pushInFlight || !pushDirty) return;
+  pushInFlight = true; pushDirty = false;
+  const payload = {
+    profile: USER ? { id:USER.id, name:USER.name, username:USER.username, photo:USER.photo, lang:USER.lang, premium:USER.premium } : { id:UID, name:'Browser guest' },
+    state, tasks,
+    updatedAt: Date.now(),
+    tg: IS_TG
+  };
+  try{
+    await fetch(cloudPath(), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  }catch(e){}
+  pushInFlight = false;
+  if(pushDirty) flushCloud();
+}
+async function pullCloud(){
+  try{
+    const r = await fetch(cloudPath() + '?ts=' + Date.now());
+    if(!r.ok) return null;
+    const j = await r.json();
+    return j && typeof j === 'object' ? j : null;
+  }catch(e){ return null; }
+}
+async function syncProfile(){
+  const cloud = await pullCloud();
+  if(cloud){
+    const remoteNewer = (cloud.updatedAt||0) > 0;
+    // progress: prefer the copy that has more activity, so a fresh device never wipes a real account
+    const remoteItems = (cloud.state && Array.isArray(cloud.state.items)) ? cloud.state.items.length : 0;
+    const localItems = state.items.length;
+    if(remoteNewer && (remoteItems >= localItems || !localItems)){
+      if(cloud.state) state = Object.assign({balance:3000, spins:1, spinsMade:0, items:[]}, cloud.state);
+      if(!Array.isArray(state.items)) state.items = [];
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    }
+    if(cloud.tasks){
+      const remoteClaimed = !!cloud.tasks.limitedClaimed;
+      const localClaimed = !!tasks.limitedClaimed;
+      if(remoteClaimed || !localClaimed) tasks = Object.assign(tasks, cloud.tasks);
+      try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
+    }
+  }
+  cloudReady = true;
+  registerLimitedCard();
+  renderInventory(); renderShop(); renderStats(); renderTasks();
+  flushCloud();
+}
+let whoOpen = false;
+function bindIdentity(){
+  const host = $('#whoami'); if(!host) return;
+  host.addEventListener('click', ()=>{
+    haptic('light');
+    toast(USER ? ('Linked to Telegram · '+USER.name+(USER.username?(' @'+USER.username):'')) : 'Guest mode — open via Telegram to link progress', USER ? '' : 'gray');
+  });
+}
+
+/* identity chip in the top bar */
+function renderAcctLine(){
+  const el = $('#acctLine'); if(!el) return;
+  if(USER){
+    el.className = 'acct rv d1';
+    el.innerHTML = '<span class="dotp"></span>Linked to Telegram · <b>'+(USER.username?('@'+USER.username):USER.name)+'</b>';
+  }else{
+    el.className = 'acct guest rv d1';
+    el.innerHTML = '<span class="dotp"></span>Guest mode · open inside <b>Telegram</b> to link progress';
+  }
+}
+function renderIdentity(){
+  const host = $('#whoami');
+  if(!host) return;
+  if(USER){
+    host.innerHTML = (USER.photo
+        ? '<img src="'+USER.photo+'" alt="">'
+        : '<span class="ini">'+ (USER.name||'?').trim().charAt(0).toUpperCase() +'</span>')
+      + '<span class="nm">'+(USER.username ? '@'+USER.username : USER.name)+'</span>';
+    host.title = 'Progress is linked to your Telegram account';
+  }else{
+    host.innerHTML = '<span class="ini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 3-9.5 18-2.4-6.9L3 11.5 21 3Z"/></svg></span><span class="nm">Guest</span>';
+    host.title = 'Open this Mini App inside Telegram to link your progress';
+  }
+}
+
 /* ================= TOAST ================= */
 function toast(msg,cls=''){
   const el=document.createElement('div');
@@ -1694,8 +1826,12 @@ enableBtn();
 registerLimitedCard();
 mountSkinViewer($('#taskSkinStage'), $('#taskSkinCanvas'));
 renderTasks();
+renderIdentity();
+renderAcctLine();
+bindIdentity();
+syncProfile();
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: 1 Gamlet Platinum left'); } },700);
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b39b348966ddd',t:'MTc5NDM3ODM4Ng=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b39b348966ddd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
