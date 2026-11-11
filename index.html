@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="05637a46">
+<meta name="build" content="14f09a76">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -1673,16 +1673,47 @@ async function resolveProfile(nick){
       }
     }
   }
-  if(out.skinUrl) out.skinHash = await sha256OfUrl(out.skinUrl);
+  if(out.skinUrl){
+    try{ out.skinHash = await skinPixelHash(out.skinUrl); }
+    catch(e){ out.skinHash = null; out.skinError = 'texture'; }      /* CORS / offline: not a mismatch */
+  }
   return out;
 }
-async function sha256OfUrl(url){
-  const res = await fetch(url, { mode:'cors' });
-  if(!res.ok) throw new Error('Could not load the skin texture');
-  const buf = await res.arrayBuffer();
-  const digest = await crypto.subtle.digest('SHA-256', buf);
-  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+/* ---- skin comparison -------------------------------------------------------------
+   Comparing the raw PNG bytes was wrong: every re-upload (LabY, a launcher, Mojang's own
+   re-encode) writes the same picture with different bytes. What matters is the pixels:
+   the texture is drawn into a 64×64 canvas and its RGBA buffer is hashed, so two copies of
+   the same skin are equal no matter how they were saved. */
+const SKIN_PIXELS = new Map();          /* cache: url -> pixel hash */
+function loadImage(url){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>res(img);
+    img.onerror = ()=>rej(new Error('Could not load the skin texture'));
+    img.src = url;
+  });
 }
+async function skinPixelHash(url){
+  if(SKIN_PIXELS.has(url)) return SKIN_PIXELS.get(url);
+  const img = await loadImage(url);
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  const ctx = c.getContext('2d', { willReadFrequently:true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,64,64);
+  ctx.drawImage(img, 0, 0, 64, 64);
+  const data = ctx.getImageData(0,0,64,64).data;
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const hex = [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  SKIN_PIXELS.set(url, hex);
+  return hex;
+}
+/* the declared hash of the reward skin, computed the same way, once at boot */
+let SKIN_PIXEL_SHA = null;
+(async ()=>{
+  try{ SKIN_PIXEL_SHA = await skinPixelHash(SKIN_URI); }catch(e){ SKIN_PIXEL_SHA = null; }
+})();
+async function sha256OfUrl(url){ return skinPixelHash(url); }
 
 /* ================= TASKS STATE ================= */
 /* the Otter drop is limited to LIMITED_DROPS personalised cards */
@@ -1741,7 +1772,11 @@ const TASK_DEFS = {
     title:'Otter card · wear the skin for 24 hours',
     desc:'Enter your Minecraft nickname. If the Baobabis skin is equipped the slot is yours for 24 hours; if the timer runs out without the skin on, the nickname is released and somebody else can take the slot.',
     hours:24,
-    verify: async (nick)=>{ const p = await resolveProfile(nick); return { ok: p.skinHash === SKIN_SHA, profile:p }; }
+    verify: async (nick)=>{
+      const p = await resolveProfile(nick);
+      const ok = !!p.skinHash && (p.skinHash === SKIN_PIXEL_SHA || p.skinHash === SKIN_SHA);
+      return { ok, profile:p, unreachable: !p.skinHash };
+    }
   },
   'spin-lim': {
     title:'Spin the wheel 3 times',
@@ -1795,7 +1830,8 @@ async function checkWindow(){
   try{
     const res = await TASK_DEFS['otter'].verify(a.nick);
     ok = !!(res && res.ok);
-  }catch(e){ ok = false; reachable = false; }      /* API down is not the player's fault */
+    if(res && res.unreachable) reachable = false;   /* texture CDN down is not the player's fault */
+  }catch(e){ ok = false; reachable = false; }
   if(ok){ claimLimited(a.nick); return; }
   if(!reachable){
     /* Mojang did not answer: keep the card and try again later, never punish an outage */
@@ -2694,6 +2730,12 @@ function openClaim(id, preselectSerial){
       <div class="hint" style="text-align:left;margin-bottom:6px">Minecraft nickname</div>
       <input id="nickInput" class="redeem-in" style="width:100%;text-align:left;letter-spacing:.02em" placeholder="e.g. Notch" value="${tasks.nick||''}" autocomplete="off" spellcheck="false">
       <div class="hint" id="claimMsg" style="text-align:left;margin-top:8px">We only read your public skin. Nothing is uploaded.</div>
+      <div id="claimSkinInfo" style="display:none;margin-top:10px;text-align:left">
+        <div style="display:flex;gap:10px;align-items:center">
+          <img id="claimSkinImg" alt="" style="width:56px;height:56px;image-rendering:pixelated;border-radius:8px;background:#111;border:1px solid rgba(255,255,255,.16)">
+          <div class="hint" id="claimSkinTxt" style="margin:0;font-size:10.5px;text-align:left"></div>
+        </div>
+      </div>
       <button class="mini-btn ghost" id="claimDownload" style="width:100%;margin-top:10px;min-height:38px">Download the skin PNG</button>
     </div>
     <div class="btn-row" style="margin-top:14px">
@@ -2736,12 +2778,28 @@ async function runClaim(id, wantedSerial){
       if(state.items.some(it=>it.tier==='Otter' && Number(it.serial)===serial)) throw new Error('You already own card #' + serial);
       tasks.nick = nick;
       const prof = await resolveProfile(nick);
-      if(!prof.skinHash) throw new Error('Could not read the skin texture');
-      if(prof.skinHash !== SKIN_SHA){
-        msg.innerHTML = '<b>Skin not equipped.</b> Upload the reward skin (download button below) in Minecraft, then press claim again.';
+      const infoBox = $('#claimSkinInfo'), infoImg = $('#claimSkinImg'), infoTxt = $('#claimSkinTxt');
+      const showSkin = (txt)=>{
+        if(infoBox) infoBox.style.display = 'block';
+        if(infoImg && prof.skinUrl){ infoImg.src = prof.skinUrl; infoImg.style.display = 'block'; }
+        else if(infoImg){ infoImg.style.display = 'none'; }
+        if(infoTxt) infoTxt.innerHTML = txt;
+      };
+      if(prof.unreachable || (!prof.skinUrl && !prof.skinHash)){
+        /* the texture could not be downloaded (CORS / CDN / offline) — this is NOT a mismatch */
+        msg.innerHTML = '<b>We could not read the skin right now.</b> Nothing was changed — press the button again in a moment.';
+        showSkin('Skin texture could not be downloaded. This is a network problem on our side, not a skin mismatch.');
         btn.disabled = false;
         return;
       }
+      const matches = prof.skinHash === SKIN_PIXEL_SHA || prof.skinHash === SKIN_SHA;
+      if(!matches){
+        msg.innerHTML = '<b>That skin is not the reward skin.</b> Below is the texture we read for <b style="color:#fff">' + nick + '</b> — equip the downloaded skin in Minecraft, save it, and press the button again.';
+        showSkin('Read from Minecraft for <b style="color:#fff">' + nick + '</b>. It must match the pink Baobabis skin byte-for-byte in pixels (64×64, Slim).');
+        btn.disabled = false;
+        return;
+      }
+      if(infoBox) infoBox.style.display = 'none';
       /* the skin is on right now: the slot is reserved for this nickname for 24 hours */
       tasks.active = { id:'otter', nick, serial, startedAt: Date.now(), endsAt: Date.now() + 24*3600*1000, needsCheck:false };
       tasks.pendingSerial = serial;
@@ -3671,5 +3729,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Otter drop: ' + Math.max(0, LIMITED_DROPS-slotsTaken()) + ' of ' + LIMITED_DROPS + ' personalised cards are free'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58d9ed27a61aa14',t:'MTc5NDQwMzQ5OQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58d9ed27a61aa14',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58daab0dd43c6a0',t:'MTc5NDQwMzk4Ng=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58daab0dd43c6a0',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
