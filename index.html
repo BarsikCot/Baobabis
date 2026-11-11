@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="fd12e288">
+<meta name="build" content="0571b9a8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -20,7 +20,7 @@
   --serif:"Bodoni 72","Didot","Playfair Display","Times New Roman",Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--black);color:var(--white);overflow-x:hidden}
+html,body{background:var(--black);color:var(--white);overflow-x:hidden;touch-action:manipulation;-ms-touch-action:manipulation}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;min-height:100vh;min-height:100dvh}
 body.locked{overflow:hidden}
@@ -522,6 +522,31 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .eco-note p{font-size:11.5px;line-height:1.55;color:var(--muted)}
 .eco-note p b{color:#fff}
 
+/* ================= COMPACT ITEM SHEET ================= */
+.overlay{padding:10px}
+.sheet{max-height:calc(100vh - 20px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@supports (max-height:100dvh){ .sheet{max-height:calc(100dvh - 20px)} }
+.sheet-item{padding:18px 16px 14px;max-width:360px}
+.sheet-item h3{font-size:17px;margin:0}
+.sheet-item .kicker{display:inline-block;margin-bottom:4px;font-size:9px;letter-spacing:.18em}
+.sheet-item .im-head{display:flex;gap:12px;align-items:flex-start;text-align:left}
+.im-thumb{width:84px;flex:0 0 auto;border-radius:5px;overflow:hidden;box-shadow:0 10px 22px -14px #000,0 0 0 1px rgba(255,255,255,.16)}
+.im-thumb .gcard{max-width:none;width:100%;border-radius:5px;box-shadow:none;text-shadow:none;pointer-events:none}
+.im-info{flex:1;min-width:0;padding-right:30px}
+.im-thumb .gc-title{display:none}
+.im-sub{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.im-dm{width:52px;height:52px;background:#fff;border-radius:9px;padding:5px;margin-top:8px;cursor:pointer}
+.sheet-item .im-specs{margin-top:12px;text-align:left}
+.sheet-item .im-specs .spec{min-width:0;width:100%;display:flex;justify-content:space-between;align-items:center;
+  border:none;border-bottom:1px solid rgba(255,255,255,.09);border-radius:0;padding:7px 0;background:none}
+.sheet-item .im-specs .spec:last-child{border-bottom:none}
+.sheet-item .im-specs .spec span{display:inline;margin:0;font-size:9px}
+.sheet-item .im-specs .spec b{font-size:12px}
+.sheet-item .sell-row{margin-top:12px}
+.sheet-item .hint{margin-top:7px;font-size:10.5px;line-height:1.45}
+.sheet-item .acts{margin-top:10px}
+.sheet-item .acts .btn{min-height:42px;font-size:13px}
+
 /* ================= QUICK SPIN ================= */
 .qs{margin-top:12px;text-align:left}
 .qs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
@@ -1013,22 +1038,24 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 
 <!-- ITEM SHEET -->
 <div class="overlay" id="itemOverlay">
-  <div class="sheet">
+  <div class="sheet sheet-item">
     <button class="x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    <div class="sheet-card" id="imCard"></div>
-    <div class="kicker" id="imKicker">Card</div>
-    <h3 id="imName">—</h3>
-    <p class="desc" id="imMeta">—</p>
-    <div style="text-align:left" id="imSpecs"></div>
-    <div style="display:flex;justify-content:center;margin-top:12px">
-      <div style="width:96px;height:96px;background:#fff;border-radius:10px;padding:8px" id="imDm"></div>
+    <div class="im-head">
+      <div class="im-thumb" id="imCard"></div>
+      <div class="im-info">
+        <div class="kicker" id="imKicker">Card</div>
+        <h3 id="imName">—</h3>
+        <p class="im-sub" id="imMeta">—</p>
+        <div class="im-dm" id="imDm"></div>
+      </div>
     </div>
-    <div class="sell-row" style="margin-top:14px">
+    <div class="im-specs" id="imSpecs"></div>
+    <div class="sell-row">
       <button class="btn btn-sell" id="imFastSell">Sell now</button>
       <button class="btn btn-list" id="imToList">List</button>
     </div>
-    <div class="hint" id="imSellHint" style="margin-top:8px">—</div>
-    <div class="acts" style="margin-top:10px"><button class="btn btn-white" data-close>Close</button></div>
+    <div class="hint" id="imSellHint">—</div>
+    <div class="acts"><button class="btn btn-dark" data-close>Close</button></div>
   </div>
 </div>
 
@@ -1970,14 +1997,16 @@ $('#invGrid').addEventListener('click',e=>{
   const card=e.target.closest('[data-item]'); if(!card) return;
   const it=state.items.find(x=>x.id===card.dataset.item); if(!it) return;
   const tpl=byCode(it.code);
-  $('#imCard').innerHTML=cardHTML(tpl,{},true);
-  $('#imKicker').textContent=it.tier.toUpperCase()+' · GAMLET ORIGINAL';
-  $('#imName').textContent='Gamlet '+it.tier+' #'+it.num;
-  $('#imMeta').textContent=new Date(it.ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+it.origin;
-  const row=(k,v)=>`<div class="spec" style="min-width:0;width:100%;display:flex;justify-content:space-between;align-items:center;border:none;border-bottom:1px solid rgba(255,255,255,.1);border-radius:0;padding:9px 0;background:none"><span style="display:inline;margin:0">${k}</span><b>${v}</b></div>`;
-  $('#imSpecs').innerHTML=row('Tier',it.tier)+row('Value',fmt(it.value)+' B')+row('Data Matrix','<span class="dm-code">'+it.code+'</span>')+row('Owner','You · Baobabis');
+  $('#imCard').innerHTML=cardHTML(tpl,{mini:true},true);
+  $('#imKicker').textContent=it.tier.toUpperCase()+' · GAMLET #'+it.num;
+  $('#imName').textContent='Gamlet '+it.tier;
+  const when = new Date(it.ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  $('#imMeta').textContent = when + ' · ' + (it.origin || 'Free spin');
+  const row=(k,v)=>`<div class="spec"><span>${k}</span><b>${v}</b></div>`;
+  $('#imSpecs').innerHTML = row('Value', fmt(it.value)+' B') + row('Data Matrix', '<span class="dm-code">'+esc(it.code)+'</span>') + row('Owner', 'You · Baobabis');
   $('#imDm').innerHTML=dmSVG(it.code);
-  $('#imDm').onclick=()=>{ $('#dmZoom').innerHTML=dmSVG(it.code); $('#dmZoomCode').textContent=it.code; openOverlay('#dmOverlay'); };
+  $('#imDm').innerHTML = dmSVG(it.code);
+  $('#imDm').onclick=(e)=>{ e.stopPropagation(); $('#dmZoom').innerHTML=dmSVG(it.code); $('#dmZoomCode').textContent=it.code; openOverlay('#dmOverlay'); };
   const hint=$('#imSellHint');
   const quick=fastSellPrice(it);
   const floor=minListPrice(it);
@@ -2926,6 +2955,34 @@ async function pullBoard(){
   }catch(e){}
 }
 
+/* ================= NO DOUBLE-TAP ZOOM ================= */
+/* touch-action:manipulation handles modern engines; this covers iOS Safari and old webviews
+   that still zoom on a double tap. Pinch-to-zoom stays available. */
+(function(){
+  let lastTap = 0, lastX = 0, lastY = 0;
+  const reset = ()=>{ lastTap = 0; };
+  document.addEventListener('touchend', function(e){
+    if(e.touches && e.touches.length) return;            /* pinch in progress */
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    const now = Date.now();
+    if(t && now - lastTap < 320 && Math.abs(t.clientX-lastX) < 32 && Math.abs(t.clientY-lastY) < 32){
+      if(e.cancelable) e.preventDefault();               /* swallow the zoom gesture / ghost click */
+      lastTap = 0;
+      return;
+    }
+    lastTap = now;
+    if(t){ lastX = t.clientX; lastY = t.clientY; }
+  }, {passive:false});
+  document.addEventListener('touchstart', function(e){
+    if(e.touches && e.touches.length > 1) reset();        /* never interfere with pinch */
+  }, {passive:true});
+  document.addEventListener('gesturestart', function(e){   /* iOS Safari proprietary */
+    if(e.cancelable) e.preventDefault();
+  }, {passive:false});
+  /* double click on desktop trackpads should not zoom either */
+  document.addEventListener('dblclick', function(e){ if(e.cancelable) e.preventDefault(); }, {passive:false});
+})();
+
 /* ================= ERROR SURFACE ================= */
 let bootErrors = 0;
 window.addEventListener('error', (e)=>{
@@ -3014,5 +3071,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58be9c0092a05fb',t:'MTc5NDM4NTU5Nw=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58be9c0092a05fb',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58c017fbf6cb7b8',t:'MTc5NDM4NjU3MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58c017fbf6cb7b8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
