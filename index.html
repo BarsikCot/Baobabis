@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="8cf59abf">
+<meta name="build" content="6802e6ce">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
@@ -259,7 +259,7 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
 @keyframes spinSlow{to{transform:rotate(360deg)}}
 #wheel{width:100%;height:100%;border-radius:50%;will-change:transform;
   box-shadow:0 0 0 8px #000,0 0 0 9px rgba(255,255,255,.1),0 24px 60px -20px rgba(255,255,255,.16);
-  transition:transform 6s cubic-bezier(.1,.72,.04,1)}
+  transform-origin:50% 50%}
 .pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 6px 12px #000);
   animation:ptrBob 2.6s ease-in-out infinite}
 @keyframes ptrBob{50%{transform:translateX(-50%) translateY(4px)}}
@@ -494,6 +494,37 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 .eco-note .ic svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .eco-note p{font-size:11.5px;line-height:1.55;color:var(--muted)}
 .eco-note p b{color:#fff}
+
+/* ================= QUICK SPIN ================= */
+.qs{margin-top:12px;text-align:left}
+.qs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.qs-head h3{font-size:15px}
+.qs-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.qs-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:13px;
+  border:1px solid var(--line);background:#080808;transition:border-color .22s,background .22s,transform .2s var(--spring)}
+.qs-opt b{font-size:15px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.qs-opt span{font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.qs-opt:active{transform:scale(.95)}
+.qs-opt.on{border-color:#fff;background:#fff;color:#000}
+.qs-opt.on span{color:#333}
+.qs-opt.dis{opacity:.35;pointer-events:none}
+.qs-multi{display:block;text-align:center;margin-top:10px;line-height:1.6;
+  padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:#080808;font-size:11px;color:var(--muted)}
+.qs-multi b{color:#fff;font-weight:900}
+.qs-total{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;
+  padding:11px 13px;border-radius:13px;border:1px solid var(--line2);background:linear-gradient(180deg,#151515,#070707)}
+.qs-total .lb{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.qs-total .vl{font-size:16px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.qs-luck{margin-top:10px}
+.qs-luck .row{display:flex;align-items:center;gap:8px;font-size:10.5px;margin-top:6px;color:var(--muted)}
+.qs-luck .row b{width:66px;flex:0 0 auto;color:#fff;font-weight:800;font-size:10px;letter-spacing:.02em}
+.qs-luck .bal{flex:1;height:5px;border-radius:99px;background:#1a1a1a;overflow:hidden}
+.qs-luck .bal i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .45s var(--ease)}
+.qs-luck .pc{width:56px;flex:0 0 auto;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#fff;font-weight:800}
+.wheel-wrap.spinning #hubBtn{pointer-events:none}
+.spin-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:-6px;z-index:7;display:flex;gap:4px;align-items:center}
+.spin-bar i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
+.spin-bar i.on{background:#fff;box-shadow:0 0 8px #fff}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .rv{opacity:1;transform:none}
@@ -580,11 +611,11 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     </div>
 
     <div class="lim-banner rv d4" id="limBanner">
-      <span class="tag">1 of 1</span>
+      <span class="tag">10 cards</span>
       <span class="thumb" id="limThumb"></span>
       <span class="tx">
         <b>Limited drop · Platinum</b>
-        <span id="limStatus"><i class="pulse"></i>1 of 1 physical card · 1 task</span>
+        <span id="limStatus"><i class="pulse"></i>Limited drop · 10 of 10 left for you</span>
       </span>
     </div>
 
@@ -624,12 +655,30 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
       </svg>
       <svg id="wheel" viewBox="0 0 500 500" role="img" aria-label="Baobabis wheel"></svg>
       <button class="hub" id="hubBtn">SPIN</button>
+      <span class="spin-bar" id="spinBar" aria-hidden="true"></span>
     </div>
 
     <div class="card rv d3" style="margin-top:14px">
       <div class="status" id="status"><span class="led"></span><span id="statusTxt">Free spin ready</span></div>
       <button class="btn btn-white" id="spinBtn">Spin for free</button>
       <div class="hint" style="margin-top:10px">Spins left: <b id="spinsLeft" style="color:#fff">1</b></div>
+    </div>
+
+    <div class="card rv d3 qs">
+      <div class="qs-head"><h3>Quick spin</h3><span class="badge-lite">odds boost</span></div>
+      <div class="qs-opts" id="qsOpts">
+        <button class="qs-opt on" data-mult="1"><b>×1</b><span>standard</span></button>
+        <button class="qs-opt" data-mult="5"><b>×5</b><span>spins</span></button>
+        <button class="qs-opt" data-mult="10"><b>×10</b><span>spins</span></button>
+        <button class="qs-opt" data-mult="25"><b>×25</b><span>spins</span></button>
+      </div>
+      <div class="qs-total">
+        <span class="lb">Spin power · <span id="qsMult">×1</span></span>
+        <span class="vl" id="qsPower">1.00×</span>
+      </div>
+      <div class="qs-multi" id="qsMulti">Every drop gets <b id="qsTier">Standard odds</b></div>
+      <div class="qs-luck" id="qsLuck"></div>
+      <div class="hint" style="margin-top:9px">More spins in one roll — better chance at the black tier, worse at Basic. Fast spin resolves in 1.4 s.</div>
     </div>
 
     <div class="card rv d3">
@@ -789,14 +838,15 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <div class="center">
       <div class="eyebrow rv"><i></i>Tasks</div>
       <h2 class="rv d1" style="margin-top:10px">Tasks &amp; drop</h2>
-      <p class="sub rv d1" style="margin-top:8px">Complete a task, equip the reward skin in Minecraft and keep it for 24 hours. The site checks your skin and unlocks the only Gamlet Platinum physical card.</p>
+      <p class="sub rv d1" style="margin-top:8px">Complete a task, equip the reward skin in Minecraft and keep it for 24 hours. The site checks your skin and unlocks one of the 10 Gamlet Platinum physical cards.</p>
       <div class="acct rv d1" id="acctLine" style="margin-top:12px"></div>
     </div>
 
     <div class="card rv d2" style="margin-top:16px;text-align:center">
-      <div class="kicker" style="justify-content:center">Limited · 1 of 1</div>
+      <div class="kicker" style="justify-content:center" id="limHeroKicker">Limited · 10 cards</div>
       <h3 style="margin-top:8px;font-size:19px">Physical Gamlet Platinum</h3>
-      <p class="sub" style="margin-top:6px;font-size:12.5px">The reward skin you need to equip. The card itself is a single printed original — its code is revealed only to the winner.</p>
+      <p class="sub" style="margin-top:6px;font-size:12.5px">Wear the reward skin for 24 hours. The drop is limited to <b style="color:#fff">10 physical originals</b> — each claim gets its own Data Matrix, shown only to its owner.</p>
+      <div class="specs" style="margin-top:12px"><div class="spec" id="limHeroSpec"><span>Claimed</span><b>0 / 10</b></div></div>
       <div class="skin-stage" id="taskSkinStage" style="margin-top:14px">
         <span class="glowring"></span>
         <canvas id="taskSkinCanvas"></canvas>
@@ -838,7 +888,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
         <div class="qa"><button>Why 24 hours? <span class="pm">+</span></button>
           <div class="ans"><p>To prove you really wear the skin. The countdown starts when you press Start check and the site re-verifies your texture when it ends. Changing or removing the skin cancels the task.</p></div></div>
         <div class="qa"><button>Can two people win? <span class="pm">+</span></button>
-          <div class="ans"><p>No. The drop is a single physical Platinum card and the code is bound to the first verified claim.</p></div></div>
+          <div class="ans"><p>Yes, up to 10 players. The drop holds 10 physical Platinum originals; each verified claim gets its own Data Matrix, bound to that player only.</p></div></div>
       </div>
     </div>
 
@@ -973,10 +1023,10 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <div class="confetti" id="limConfetti"></div>
     <button class="x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div class="sheet-card" id="limCard" style="max-width:236px"></div>
-    <div class="kicker">Limited drop · 1 of 1</div>
+    <div class="kicker">Limited drop · <span id="limDropNo">1</span> of 10</div>
     <h3>Gamlet Platinum physical</h3>
     <p class="sub" style="margin-top:8px;font-size:12.5px">Verified for 24 hours. The code below is the only one in existence — it is now bound to your collection.</p>
-    <div class="specs"><div class="spec"><span>Tier</span><b>Platinum</b></div><div class="spec"><span>Serial</span><b>#1 / 1</b></div></div>
+    <div class="specs"><div class="spec"><span>Tier</span><b>Platinum</b></div><div class="spec"><span>Serial</span><b id="limSerial">#1 / 10</b></div></div>
     <div class="tile" id="limDmTile" style="width:132px;height:132px;margin:14px auto 6px;background:#fff;border-radius:14px;padding:10px"></div>
     <div class="dm-code" id="limDmCode" style="text-align:center"></div>
     <div class="btn-row" style="margin-top:16px"><button class="btn btn-white" data-close>Claim card</button></div>
@@ -1385,7 +1435,12 @@ async function sha256OfUrl(url){
 }
 
 /* ================= TASKS STATE ================= */
-let tasks = { nick:'', active:null, history:[], limitedClaimed:false, limitedCode:null, startedAt:0 };
+/* the physical Platinum drop is limited to LIMITED_DROPS claims */
+const LIMITED_DROPS = 10;
+const DROP_SCHEMA = 2;                       /* bump = one-shot migration of local progress */
+const SESSION_ID = 's-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
+let tasks = { nick:'', active:null, history:[], limitedClaimed:false, limitedCode:null, startedAt:0,
+  drops: 0, codes: [], reset:v => v };
 try{ const raw = localStorage.getItem(TKEY); if(raw) tasks = Object.assign(tasks, JSON.parse(raw)); }catch(e){}
 const saveTasks = ()=>{ try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){} pushCloud(); };
 function registerLimitedCard(){
@@ -1429,8 +1484,13 @@ function limitedCodeFor(nick){
 
 function taskState(id){
   const t = TASK_DEFS[id];
+  const finished = (tasks.drops||0) >= LIMITED_DROPS;
   const rec = tasks.history.find(x=>x.id===id);
-  if(rec && rec.status==='claimed') return { status:'claimed', rec };
+  if(rec && rec.status==='claimed'){
+    /* the drop can be repeated up to LIMITED_DROPS times */
+    if(id === 'skin24' && !finished) return { status:'available', rec };
+    return { status:'claimed', rec };
+  }
   if(tasks.active && tasks.active.id===id){
     const left = Math.max(0, (tasks.active.endsAt||0) - Date.now());
     return { status: left>0 ? 'running' : 'verifying', rec: tasks.active, left };
@@ -1482,32 +1542,171 @@ function buildWheel(){
 }
 buildWheel();
 
-function weightedTier(){
-  const total=TIER_ORDER.reduce((s,t)=>s+TIERS[t].w,0);
-  let r=Math.random()*total;
-  for(const t of TIER_ORDER){ r-=TIERS[t].w; if(r<=0) return t; }
+/* ---- odds depend on how many spins are committed to one roll (quick spin) ---- */
+const MULT_TIERS = [1,5,10,25];
+const MULT_BONUS = { 1:0, 5:18, 10:42, 25:110 };      /* % added to the top of the tier ladder */
+let spinMult = Number(localStorage.getItem('baobabis.mult') || 1);
+if(MULT_TIERS.indexOf(spinMult) < 0) spinMult = 1;
+
+function oddsFor(mult){
+  const m = MULT_BONUS[mult] || 0;
+  const raw = TIER_ORDER.map((t,i)=>{
+    let w = TIERS[t].w;
+    if(i === 5) w *= (1 + m/100);                      /* Legendary */
+    else if(i === 4) w *= (1 + m/140);                 /* Platinum */
+    else if(i === 3) w *= (1 + m/400);                 /* Mythic, small */
+    else if(i <= 1) w *= (1 - Math.min(0.72, m/160));  /* Basic + Rare sink */
+    return Math.max(0.4, w);
+  });
+  const sum = raw.reduce((a,b)=>a+b,0);
+  const pct = raw.map(w=> w/sum*100);
+  /* fix float drift so the ladder always totals 100.0 */
+  const drift = 100 - pct.reduce((a,b)=>a+b,0);
+  pct[0] += drift;
+  return pct;
+}
+const tierWeights = mult => oddsFor(mult);
+function weightedTier(mult){
+  const ws = tierWeights(mult || spinMult);
+  const total = ws.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for(let i=0;i<TIER_ORDER.length;i++){ r -= ws[i]; if(r<=0) return TIER_ORDER[i]; }
   return 'Basic';
 }
 function setStatus(cls,txt){ $('#status').className='status '+cls; $('#statusTxt').textContent=txt; }
 
-function spin(){
-  if(spinning) return;
-  spinning = true;
-  if(state.spins<=0){ spinning = false; toast('No spins left — grab a booster','gray'); haptic('warn'); return; }
-  state.spins--; save(); renderStats();
-  const tier=weightedTier();
-  const idxs=ORDER.map((t,i)=>t===tier?i:-1).filter(i=>i>=0);
-  const idx=pick(idxs), center=idx*SEG_A+SEG_A/2, jitter=(Math.random()-.5)*SEG_A*.6;
-  rotation=360*(6+rnd(3))+(360-center-jitter)+(rotation%360);
-  wheelEl.style.transform=`rotate(${rotation}deg)`;
-  setStatus('spin','Spinning…');
-  $('#hubBtn').classList.add('busy'); $('#spinBtn').disabled=true;
-  haptic('med');
-  const ticks=setInterval(()=>haptic('light'),240);
-  setTimeout(()=>clearInterval(ticks),2200);
-  setTimeout(()=>{ spinning=false; $('#hubBtn').classList.remove('busy'); onDrop(tier); },6150);
+/* ---- the wheel is driven by JS (no CSS transition): the card that lands under the
+   pointer is exactly the card that gets granted, no matter how slow the phone is ---- */
+const SPIN_TURNS_MIN = 4, SPIN_TURNS_MAX = 6;
+let spinAnim = null;
+
+function markSpinBar(){
+  const host = $('#spinBar'); if(!host) return;
+  const dots = [...host.querySelectorAll('i')];
+  dots.forEach(d=>d.classList.remove('on'));
+}
+function animateWheel(duration, turns, wobble, done){
+  const from = rotation % 360;
+  const to = from + 360*turns - (wobble||0);
+  const t0 = performance.now();
+  /* ease-out quint: fast launch, long readable settle */
+  const ease = t => 1 - Math.pow(1-t, 5);
+  let lastFrame = t0;
+  const step = (now)=>{
+    const k = Math.min(1, (now - t0)/duration);
+    const ang = from + (to - from)*ease(k);
+    rotation = ang;
+    wheelEl.style.transform = 'rotate(' + ang.toFixed(2) + 'deg)';
+    /* audible/haptic ticks slow down with the wheel */
+    if(now - lastFrame > 30 + 260*k*k){ lastFrame = now; }
+    if(k < 1){ spinAnim = requestAnimationFrame(step); }
+    else { spinAnim = null; rotation = to; wheelEl.style.transform = 'rotate(' + ((to%360+360)%360).toFixed(2) + 'deg)'; done(); }
+  };
+  spinAnim = requestAnimationFrame(step);
 }
 
+function spin(multOverride){
+  if(spinning) return;
+  const mult = (MULT_TIERS.indexOf(Number(multOverride)) >= 0) ? Number(multOverride) : spinMult;
+  if(state.spins < mult){ toast('Need ' + mult + ' spins — you have ' + state.spins, 'gray'); haptic('warn'); return; }
+  spinning = true;
+  state.spins -= mult;
+  save(); renderStats();
+
+  /* one card per committed spin, drawn from the boosted ladder */
+  const results = [];
+  const boosts = {};
+  for(let i=0;i<mult;i++){
+    const t = weightedTier(mult);
+    results.push(t);
+    boosts[t] = (boosts[t]||0) + 1;
+  }
+  const tier = results[0];
+  const idxs = ORDER.map((t,i)=>t===tier?i:-1).filter(i=>i>=0);
+  const idx = pick(idxs), center = idx*SEG_A + SEG_A/2;
+  const jitter = (Math.random()-0.5)*SEG_A*0.34;      /* always well inside the winning segment */
+
+  const fast = mult > 1;
+  const duration = fast ? 1400 : 5150;
+  const turns = fast ? 3 : (SPIN_TURNS_MIN + rnd(SPIN_TURNS_MAX - SPIN_TURNS_MIN + 1));
+
+  setStatus('spin', fast ? ('Quick spin ×' + mult + ' · ' + mult + ' cards…') : 'Spinning…');
+  $('#hubBtn').classList.add('busy');
+  $('.wheel-wrap').classList.add('spinning');
+  $('#spinBtn').disabled = true;
+  markSpinBar();
+  haptic('med');
+
+  const ticker = setInterval(()=>haptic('light'), fast ? 110 : 190);
+  setTimeout(()=>clearInterval(ticker), duration*0.62);
+
+  animateWheel(duration, turns, jitter, ()=>{
+    spinning = false;
+    $('#hubBtn').classList.remove('busy');
+    $('.wheel-wrap').classList.remove('spinning');
+    clearInterval(ticker);
+    if(mult === 1){ onDrop(tier); }
+    else { onQuickDrop(results, boosts); }
+    setTimeout(()=>{ if(!spinning){ setStatus('','Free spin ready'); enableBtn(); } }, 2600);
+  });
+}
+
+/* quick spin: several rolls at once, best card goes to the collection, the rest cash out */
+function onQuickDrop(results, boosts){
+  state.spinsMade += results.length;
+  const payout = p => Math.floor((PRICE[p.tier] || 0) * 0.35 * (p.mult || 1));
+  const candidates = results.map((tier, i)=>{
+    const tpl = pick(cardsOfTier(tier));
+    return { id:'c-'+Date.now().toString(36)+i.toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier,
+      num:tpl.num, photo:tpl.photo, value:PRICE[tier], ts:Date.now(), origin:'Quick spin ×'+results.length, mult:results.length };
+  });
+  const owned = ownedCodes();
+  /* prefer a card we do not have yet, best tier first */
+  const rank = t => TIER_ORDER.indexOf(t);
+  const sorted = candidates.slice().sort((a,b)=> rank(b.tier) - rank(a.tier));
+  const best = sorted.find(c=>!owned.has(c.code)) || sorted[0];
+  const rest = candidates.filter(c=>c !== best);
+  const refund = rest.reduce((s,c)=> s + Math.floor((PRICE[c.tier]||0)*0.35), 0);
+
+  if(owned.has(best.code)){
+    /* even the best one is a duplicate -> the usual duplicate choice */
+    state.spins += results.length;             /* whole roll refunded as spins */
+    save(); renderStats();
+    setStatus('done','Duplicate: '+best.tier);
+    haptic('warn');
+    showDuplicate(best);
+    return;
+  }
+  state.items.unshift(best);
+  state.balance += refund;
+  save(); renderInventory(); renderStats(); renderShop();
+  setStatus('done','Quick ×'+results.length+' · '+best.tier+(refund?(' +'+fmt(refund)+' B'):''));
+  haptic('ok');
+  showQuickWin(best, results, refund);
+}
+
+function showQuickWin(best, results, refund){
+  const tpl = byCode(best.code) || best;
+  $('#winCard').innerHTML = cardHTML(tpl, {}, true);
+  $('#winKicker').textContent = 'Quick spin · ' + results.length + ' cards';
+  $('#winTitle').textContent = 'Gamlet ' + best.tier;
+  $('#winDesc').textContent = 'Best card of the roll went to your collection' + (refund ? ' — the other ' + (results.length-1) + ' cashed out for ' + fmt(refund) + ' B.' : '.');
+  $('#winTier').textContent = best.tier;
+  $('#winValue').textContent = fmt(best.value) + ' B';
+  $('#winCode').textContent = best.code;
+  const sum = {};
+  results.forEach(t=>{ sum[t]=(sum[t]||0)+1; });
+  const breakdown = Object.keys(sum).sort((a,b)=>TIER_ORDER.indexOf(b)-TIER_ORDER.indexOf(a))
+    .map(t=>sum[t]+'× '+t).join(' · ');
+  $('#winDesc').textContent = 'Roll: ' + breakdown + '. Best card kept' + (refund ? ', the rest cashed out for ' + fmt(refund) + ' B.' : '.');
+  const flash = $('#winFlash');
+  flash.style.transition='none'; flash.style.opacity='.55';
+  requestAnimationFrame(()=>{ flash.style.transition='opacity .7s ease-out'; flash.style.opacity='0'; });
+  confetti(best.tier);
+  openOverlay('#winOverlay');
+}
+
+/* the drop of a single spin (unchanged path) */
 function onDrop(tier){
   const tpl = pick(cardsOfTier(tier));
   const item = { id:'c-'+Date.now().toString(36)+rnd(9999).toString(36), code:tpl.code, tier:tpl.tier,
@@ -1574,6 +1773,69 @@ function enableBtn(){
   b.textContent = state.spins>0 ? 'Spin for free' : 'No spins — buy a booster';
 }
 
+/* ================= QUICK SPIN UI ================= */
+function renderQuickSpin(){
+  const pct = oddsFor(spinMult);
+  const el = $('#qsMult'); if(el) el.textContent = '×' + spinMult;
+  const pw = $('#qsPower'); if(pw) pw.textContent = (1 + (MULT_BONUS[spinMult]||0)/100).toFixed(2) + '×';
+  const tierTxt = {1:'Standard odds', 5:'Boosted odds', 10:'High odds', 25:'Max odds'}[spinMult] || 'Standard odds';
+  const bt = $('#qsTier'); if(bt) bt.textContent = tierTxt;
+  const bm = $('#qsMulti');
+  if(bm){
+    const can = state.spins >= spinMult;
+    bm.innerHTML = spinMult === 1
+      ? 'Each spin gives <b>1 card</b> at standard odds'
+      : (can ? 'Uses <b>'+spinMult+' spins</b> · grants <b>'+spinMult+' cards</b>, the best one stays'
+             : 'You need <b>'+spinMult+' spins</b> — you have '+state.spins);
+  }
+  const luck = $('#qsLuck');
+  if(luck){
+    const base = oddsFor(1);
+    luck.innerHTML = TIER_ORDER.slice().reverse().map((t,i)=>{
+      const idx = TIER_ORDER.indexOf(t);
+      const v = pct[idx], b = base[idx];
+      const arrow = v > b ? '▲' : v < b ? '▼' : '';
+      return `<div class="row"><b>${t}</b><span class="bal"><i style="width:${Math.min(100,v*2)}%"></i></span>
+        <span class="pc">${v.toFixed(1)}%${arrow?' '+arrow:''}</span></div>`;
+    }).join('');
+  }
+  const dots = $('#spinBar');
+  if(dots) dots.innerHTML = spinMult === 1 ? '<i class="on"></i>' : Array.from({length: Math.min(spinMult,12)},()=>'<i></i>').join('');
+}
+function setSpinMult(m){
+  spinMult = m;
+  try{ localStorage.setItem('baobabis.mult', String(m)); }catch(e){}
+  $$('#qsOpts .qs-opt').forEach(b=>b.classList.toggle('on', Number(b.dataset.mult)===m));
+  renderQuickSpin();
+  renderOdds();
+  haptic('light');
+}
+function renderOdds(){
+  const pct = oddsFor(spinMult);
+  const box = $('#oddsBox'); if(!box) return;
+  box.innerHTML = TIER_ORDER.map((t,i)=>{
+    const p = PAL[t];
+    return `<div class="odd">
+      <span class="sw" style="background:linear-gradient(180deg,${p[1]},${p[0]})"></span>
+      <span class="nm">${t}</span>
+      <span class="bar"><i data-w="${pct[i]*2}"></i></span>
+      <span class="pc">${pct[i].toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>{
+    $$('#oddsBox .odd .bar i').forEach(i=> i.style.width = Math.min(100, Number(i.dataset.w)) + '%');
+  });
+}
+$$('#qsOpts .qs-opt').forEach(b=>{
+  b.dataset.mult = b.dataset.mult;
+  b.addEventListener('click', ()=>{
+    const m = Number(b.dataset.mult);
+    if(state.spins < m){ toast('You need ' + m + ' spins — spin more first', 'gray'); haptic('warn'); return; }
+    setSpinMult(m);
+  });
+});
+$$('#qsOpts .qs-opt').forEach(b=>{ if(Number(b.dataset.mult)===spinMult) b.classList.add('on'); });
+
 /* ================= WIN SHEET ================= */
 function showWin(item){
   const tpl=byCode(item.code);
@@ -1623,15 +1885,7 @@ $('#tierList').innerHTML = TIER_ORDER.slice().reverse().map(t=>{
   </div>`;
 }).join('');
 
-$('#oddsBox').innerHTML = TIER_ORDER.map(t=>{
-  const p=PAL[t];
-  return `<div class="odd">
-    <span class="sw" style="background:linear-gradient(180deg,${p[1]},${p[0]})"></span>
-    <span class="nm">${t}</span>
-    <span class="bar"><i data-w="${TIERS[t].w*2}"></i></span>
-    <span class="pc">${TIERS[t].w}%</span>
-  </div>`;
-}).join('');
+renderOdds();
 
 $('#cardsRow').innerHTML = TIER_ORDER.slice().reverse().map(t=>
   `<div style="flex:0 0 148px">${cardHTML(pick(cardsOfTier(t)),{mini:true})}</div>`
@@ -1673,7 +1927,7 @@ $('#invGrid').addEventListener('click',e=>{
   const quick=fastSellPrice(it);
   const floor=minListPrice(it);
   if(isLimited(it)){
-    hint.innerHTML='Physical 1 of 1 — trading is disabled for this card.';
+    hint.innerHTML='Physical limited drop — trading is disabled for this card.';
     $('#imFastSell').disabled=true; $('#imToList').disabled=true;
   }else{
     hint.innerHTML='Quick sell <b style="color:#fff">'+fmt(quick)+' B</b> instantly · market price from '+fmt(floor)+' B';
@@ -1697,6 +1951,7 @@ function renderStats(){
   $('#balTxt').textContent=fmt(state.balance);
   const b=$('#invBadge'); b.textContent=total; b.classList.toggle('on',total>0);
   const mb=$('#mkBal'); if(mb) mb.textContent=fmt(state.balance)+' B';
+  if(typeof renderQuickSpin === 'function') renderQuickSpin();
   renderLeaderboard();
   pushBoard();
   enableBtn();
@@ -1794,8 +2049,8 @@ $$('.qa').forEach(qa=>{
 });
 
 /* ================= TRIGGERS ================= */
-$('#spinBtn').addEventListener('click',spin);
-$('#hubBtn').addEventListener('click',spin);
+$('#spinBtn').addEventListener('click', ()=>spin());
+$('#hubBtn').addEventListener('click', ()=>spin());
 $('#winAgain').addEventListener('click',()=>{
   closeAll();
   if(state.spins>0) setTimeout(spin,300); else toast('No spins left','gray');
@@ -1853,7 +2108,13 @@ function taskRowHTML(id, st){
   let action = '';
   if(st.status==='available') action = `<button class="mini-btn ghost" data-taskstart="${id}">Claim</button>`;
   else if(st.status==='ready') action = `<button class="mini-btn" data-taskstart="${id}">Claim</button>`;
-  else if(st.status==='verifying') action = `<button class="mini-btn" data-taskverify="${id}">Check now</button>`;
+  else if(st.status==='verifying'){
+    action = `<button class="mini-btn" data-taskverify="${id}">Check now</button>
+      <button class="mini-btn ghost" data-taskcancel="${id}">Cancel</button>`;
+  }
+  else if(st.status==='running'){
+    action = `<button class="mini-btn ghost" data-taskcancel="${id}">Cancel</button>`;
+  }
   else if(st.status==='claimed') action = `<span class="st">✓</span>`;
   return `<div class="task ${cls}"><span class="ico"><svg viewBox="0 0 24 24">${TASK_ICONS[id]}</svg></span>
     <div class="bd">${body}</div>
@@ -1878,12 +2139,17 @@ function renderTasks(){
   fill('#taskAvailable', groups.available, 'All tasks are running. Good luck.');
   fill('#taskActive', groups.active, 'Nothing in progress yet.');
   fill('#taskDone', groups.done, 'Nothing completed yet.');
+  const row = $('#resetDropRow'), hint = $('#resetDropHint');
   const lim = $('#limStatus');
+  const used = tasks.drops || 0;
   if(lim){
-    if(tasks.limitedClaimed) lim.innerHTML = '<b>Claimed</b> · yours';
+    if(tasks.limitedClaimed) lim.innerHTML = '<b>Claimed</b> · ' + used + ' of ' + LIMITED_DROPS + ' yours';
     else if(tasks.active) lim.innerHTML = '<b>Running</b> · '+(tasks.active.nick?('@'+tasks.active.nick):'24h check');
-    else lim.innerHTML = '1 of 1 physical card · <b>1 task</b>';
+    else lim.innerHTML = 'Limited drop · <b>' + Math.max(0, LIMITED_DROPS - used) + ' of ' + LIMITED_DROPS + '</b> left for you';
   }
+  const heroK = $('#limHeroKicker'), heroS = $('#limHeroSpec');
+  if(heroK) heroK.textContent = 'Limited · ' + LIMITED_DROPS + ' cards';
+  if(heroS) heroS.innerHTML = '<span>Claimed</span><b>' + used + ' / ' + LIMITED_DROPS + '</b>';
 }
 setInterval(()=>{
   if(!tasks.active) return;
@@ -1899,7 +2165,7 @@ function openClaim(id){
   const st = taskState(id);
   const body = $('#claimBody');
   body.innerHTML = `
-    <div class="kicker" style="justify-content:center">Task · limited drop</div>
+    <div class="kicker" style="justify-content:center">Task · drop ${(tasks.drops||0)+1} of ${LIMITED_DROPS}</div>
     <h3 style="margin-top:8px;text-align:center">${t.title}</h3>
     <p class="sub" style="margin-top:8px;text-align:center;font-size:12.5px">${t.desc}</p>
     <div class="skin-stage" id="claimStage" style="margin-top:14px;height:200px">
@@ -1938,6 +2204,7 @@ async function runClaim(id){
         btn.disabled = false;
         return;
       }
+      if((tasks.drops||0) >= LIMITED_DROPS){ throw new Error('You already claimed all ' + LIMITED_DROPS + ' drops'); }
       tasks.active = { id:'skin24', nick, startedAt: Date.now(), endsAt: Date.now() + 24*3600*1000 };
       saveTasks();
       await FB.write('/tasks/'+encodeURIComponent(nick)+'/skin24', { startedAt: tasks.active.startedAt, endsAt: tasks.active.endsAt, status:'running' });
@@ -1969,11 +2236,15 @@ async function verifyRunningTask(){
 }
 
 function claimLimited(nick){
-  if(tasks.limitedClaimed){ toast('The limited drop is already claimed','gray'); return; }
-  const code = limitedCodeFor(nick || tasks.nick || 'guest');
-  tasks.limitedClaimed = true;
+  const used = tasks.drops || 0;
+  if(used >= LIMITED_DROPS){ toast('You already claimed all ' + LIMITED_DROPS + ' drops','gray'); haptic('warn'); return; }
+  const code = limitedCodeFor((nick || tasks.nick || 'guest') + '-' + (used + 1));
+  tasks.drops = used + 1;
+  tasks.codes = (tasks.codes || []).concat([code]);
+  tasks.limitedClaimed = tasks.drops >= LIMITED_DROPS;
   tasks.limitedCode = code;
-  tasks.history.push({ id:'skin24', status:'claimed', at:Date.now(), nick:nick||tasks.nick });
+  tasks.history = (tasks.history||[]).filter(x => x.id !== 'skin24');
+  if(tasks.limitedClaimed) tasks.history.push({ id:'skin24', status:'claimed', at:Date.now(), nick:nick||tasks.nick });
   tasks.active = null;
   saveTasks();
   FB.write('/limited', { code, nick: nick||tasks.nick||null, uid: UID, tg: IS_TG ? { id:USER.id, name:USER.name, username:USER.username } : null, at: Date.now() });
@@ -1986,10 +2257,28 @@ function claimLimited(nick){
 
   $('#limCard').innerHTML = cardHTML(tpl, {}, true);
   $('#limDmTile').innerHTML = dmSVG(code);
-  $('#limDmCode').textContent = code + ' · Platinum #1 / 1';
+  $('#limDmCode').textContent = code + ' · Platinum #' + tasks.drops + ' / ' + LIMITED_DROPS;
+  const dn = $('#limDropNo'); if(dn) dn.textContent = tasks.drops;
+  const sr = $('#limSerial'); if(sr) sr.textContent = '#' + tasks.drops + ' / ' + LIMITED_DROPS;
   closeAll();
   confetti('Platinum');
   setTimeout(()=>{ openOverlay('#limitedOverlay'); haptic('ok'); }, 160);
+  renderTasks();
+}
+
+/* ================= CANCEL TASK ================= */
+function cancelTask(id){
+  const a = tasks.active;
+  if(!a || a.id !== id){ toast('This task is not running','gray'); return; }
+  if(!confirm('Cancel this task? The 24-hour check will stop and progress is lost.')) return;
+  const nick = a.nick || tasks.nick;
+  tasks.active = null;
+  tasks.history = (tasks.history||[]).filter(x=>x.id!==id || x.status==='claimed');
+  saveTasks();
+  renderTasks();
+  toast('Task cancelled — you can start it again','gray');
+  haptic('warn');
+  try{ FB.write('/tasks/'+encodeURIComponent(nick||'anonymous')+'/skin24', { status:'cancelled', at: Date.now() }); }catch(e){}
   renderTasks();
 }
 
@@ -1997,6 +2286,8 @@ function claimLimited(nick){
 document.addEventListener('click', e=>{
   const s = e.target.closest('[data-taskstart]');
   const v = e.target.closest('[data-taskverify]');
+  const c = e.target.closest('[data-taskcancel]');
+  if(c){ e.preventDefault(); e.stopPropagation(); cancelTask(c.dataset.taskcancel); return; }
   if(s) openClaim(s.dataset.taskstart);
   if(v) verifyRunningTask();
 });
@@ -2041,6 +2332,7 @@ async function flushCloud(){
   const payload = {
     profile: USER ? { id:USER.id, name:USER.name, username:USER.username, photo:USER.photo, lang:USER.lang, premium:USER.premium } : { id:UID, name:'Browser guest' },
     state, tasks,
+    schema: DROP_SCHEMA,
     updatedAt: Date.now(),
     tg: IS_TG
   };
@@ -2059,9 +2351,30 @@ async function pullCloud(){
     return j && typeof j === 'object' ? j : null;
   }catch(e){ return null; }
 }
+/* one-shot reset shipped with the 10-drop release: every account starts the drop chain fresh */
+function migrateDropSchema(cloud){
+  const remoteSchema = Number(cloud && cloud.schema || 1);
+  if(remoteSchema >= DROP_SCHEMA) return false;
+  tasks.limitedClaimed = false;
+  tasks.limitedCode = null;
+  tasks.active = null;
+  tasks.history = [];
+  tasks.drops = 0;
+  tasks.codes = [];
+  state.items = state.items.filter(it => !(it.limited || it.origin === 'Limited drop'));
+  for(let i = EXTRA_CARDS.length-1; i >= 0; i--){ if(EXTRA_CARDS[i].limited) EXTRA_CARDS.splice(i,1); }
+  saveTasks();
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  return true;
+}
+
 async function syncProfile(){
   const cloud = await pullCloud();
-  if(cloud){
+  const migrated = migrateDropSchema(cloud);
+  if(migrated){
+    toast('Drop progress reset — 10 Platinum cards are up for grabs');
+  }
+  if(cloud && !migrated){
     const remoteNewer = (cloud.updatedAt||0) > 0;
     // progress: prefer the copy that has more activity, so a fresh device never wipes a real account
     const remoteItems = (cloud.state && Array.isArray(cloud.state.items)) ? cloud.state.items.length : 0;
@@ -2071,14 +2384,20 @@ async function syncProfile(){
       if(!Array.isArray(state.items)) state.items = [];
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
     }
-    if(cloud.tasks){
+    if(cloud.tasks && !migrated){
       const remoteClaimed = !!cloud.tasks.limitedClaimed;
       const localClaimed = !!tasks.limitedClaimed;
-      if(remoteClaimed || !localClaimed) tasks = Object.assign(tasks, cloud.tasks);
+      const remoteDrops = Number(cloud.tasks.drops) || 0;
+      if(remoteClaimed || remoteDrops >= (tasks.drops||0) || !localClaimed) tasks = Object.assign(tasks, cloud.tasks);
       try{ localStorage.setItem(TKEY, JSON.stringify(tasks)); }catch(e){}
     }
   }
   cloudReady = true;
+  if(migrated){
+    try{ fetch(DB + '/limited.json', { method:'DELETE' }).catch(()=>{}); }catch(e){}
+    await claimPayouts();
+    flushCloud();
+  }
   registerLimitedCard();
   renderInventory(); renderShop(); renderStats(); renderTasks();
   renderMarket(); renderLeaderboard();
@@ -2269,7 +2588,7 @@ function doFastSell(itemId){
   const idx = state.items.findIndex(x=>x.id===itemId);
   if(idx < 0) return;
   const it = state.items[idx];
-  if(isLimited(it)){ toast('Physical 1 of 1 cannot be sold','gray'); haptic('warn'); return; }
+  if(isLimited(it)){ toast('Physical limited drop cannot be sold','gray'); haptic('warn'); return; }
   const price = fastSellPrice(it);
   state.items.splice(idx,1);
   state.balance += price;
@@ -2336,7 +2655,7 @@ async function buyLot(id){
   if(state.items.some(i=>i.code===lot.code)){
     toast('You already own this original','gray'); haptic('warn'); return;
   }
-  if(tpl.limited){ toast('The 1 of 1 physical card cannot be traded','gray'); haptic('warn'); return; }
+  if(tpl.limited){ toast('The physical limited card cannot be traded','gray'); haptic('warn'); return; }
   state.balance -= lot.price;
   state.items.unshift({ id:'c'+Date.now().toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num,
     photo:tpl.photo, value:PRICE[tpl.tier], ts:Date.now(), origin:'Market purchase',
@@ -2525,6 +2844,7 @@ renderStats();
 loadTrades();
 loadMarketCache();
 renderLeaderboard();
+renderQuickSpin();
 pullBoard();
 setStatus('','Free spin ready');
 enableBtn();
@@ -2541,7 +2861,7 @@ claimPayouts();
 setInterval(()=>{ if(!document.hidden){ pullMarket(); claimPayouts(); pullBoard(); } }, 15000);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMarket(); claimPayouts(); pullBoard(); } });
 observeReveals();
-setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: 1 Gamlet Platinum left'); } },700);
+setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7ca9bf5a55f8',t:'MTc5NDM4MTEyOQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7ca9bf5a55f8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58ba960cc99f6eb',t:'MTc5NDM4Mjk2MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58ba960cc99f6eb',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
