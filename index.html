@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="eff3a9d1">
+<meta name="build" content="8cf59abf">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
@@ -902,6 +902,30 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
   </div>
 </div>
 
+<!-- DUPLICATE SHEET -->
+<div class="overlay" id="dupOverlay">
+  <div class="sheet">
+    <div class="confetti" id="dupConfetti"></div>
+    <button class="x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="sheet-card" id="dupCard"></div>
+    <div class="kicker" id="dupKicker">Duplicate drop</div>
+    <h3>You already own it</h3>
+    <p class="desc" id="dupDesc">This original is already in your collection. Pick what to do with the drop.</p>
+    <div class="specs">
+      <div class="spec"><span>Tier</span><b id="dupTier">—</b></div>
+      <div class="spec"><span>Card price</span><b id="dupPrice">—</b></div>
+      <div class="spec"><span>You get</span><b id="dupRefund">—</b></div>
+    </div>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn btn-white" id="dupRespin">Free re-spin</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-dark" id="dupCash">Take <span id="dupCashVal">0 B</span></button>
+    </div>
+    <div class="hint" style="margin-top:10px">Re-spin is free and does not use a spin</div>
+  </div>
+</div>
+
 <!-- ITEM SHEET -->
 <div class="overlay" id="itemOverlay">
   <div class="sheet">
@@ -1485,19 +1509,64 @@ function spin(){
 }
 
 function onDrop(tier){
-  const owned = ownedCodes();
-  const pool = cardsOfTier(tier);
-  const fresh = pool.filter(c=>!owned.has(c.code));
-  const tpl = pick(fresh.length ? fresh : pool);
+  const tpl = pick(cardsOfTier(tier));
   const item = { id:'c-'+Date.now().toString(36)+rnd(9999).toString(36), code:tpl.code, tier:tpl.tier,
     num:tpl.num, photo:tpl.photo, value:PRICE[tier],
     ts:Date.now(), origin:'Free spin' };
-  state.items.unshift(item); state.spinsMade++;
+  state.spinsMade++;
+  /* the same original cannot sit in a collection twice -> offer a choice */
+  if(ownedCodes().has(item.code)){
+    pendingDupe = item;
+    save(); renderStats();
+    setStatus('done','Duplicate: '+tier);
+    haptic('warn');
+    showDuplicate(item);
+    setTimeout(()=>{ if(!spinning) setStatus('','Free spin ready'); enableBtn(); },3000);
+    return;
+  }
+  state.items.unshift(item);
   save(); renderInventory(); renderStats(); renderShop();
   setStatus('done','Drop: '+tier);
   haptic(tier==='Legendary'?'heavy':'ok');
   showWin(item);
   setTimeout(()=>{ if(!spinning) setStatus('','Free spin ready'); enableBtn(); },3000);
+}
+
+/* ================= DUPLICATE DROP ================= */
+let pendingDupe = null;
+const dupeRefund = it => Math.max(1, Math.floor((PRICE[it.tier] || it.value || 0) * 0.5));
+
+function showDuplicate(item){
+  const tpl = byCode(item.code) || item;
+  pendingDupe = item;
+  $('#dupCard').innerHTML = cardHTML(tpl, {}, true);
+  $('#dupTier').textContent = item.tier;
+  $('#dupPrice').textContent = fmt(PRICE[item.tier] || item.value) + ' B';
+  $('#dupRefund').textContent = fmt(dupeRefund(item)) + ' B';
+  $('#dupCashVal').textContent = fmt(dupeRefund(item)) + ' B';
+  $('#dupDesc').textContent = 'Gamlet ' + item.tier + ' #' + item.num + ' is already in your collection. Spin again for another original, or take half of its price in B.';
+  confetti(item.tier);
+  openOverlay('#dupOverlay');
+}
+function dupeCashOut(){
+  if(!pendingDupe) return;
+  const gain = dupeRefund(pendingDupe);
+  state.balance += gain;
+  pushTrade({ type:'duplicate', code: pendingDupe.code, price: gain, tier: pendingDupe.tier });
+  pendingDupe = null;
+  save(); renderStats(); renderInventory(); renderShop();
+  closeAll();
+  toast('Duplicate converted · +' + fmt(gain) + ' B');
+  haptic('ok');
+}
+function dupeRespin(){
+  pendingDupe = null;
+  state.spins += 1;                       /* the re-spin is free */
+  save(); renderStats();
+  closeAll();
+  toast('Free re-spin — good luck');
+  haptic('light');
+  setTimeout(()=>{ if(!spinning) spin(); }, 320);
 }
 function enableBtn(){
   const b=$('#spinBtn');
@@ -2380,6 +2449,17 @@ if(fsBtn2) fsBtn2.addEventListener('click', ()=>{
   if(!id){ toast('Nothing to list','gray'); return; }
   openListSheet(id);
 });
+const dupBtnA = $('#dupRespin'); if(dupBtnA) dupBtnA.addEventListener('click', dupeRespin);
+const dupBtnB = $('#dupCash');   if(dupBtnB) dupBtnB.addEventListener('click', dupeCashOut);
+/* closing the sheet without choosing must never throw the drop away: it cashes out quietly */
+const dupOverlayEl = $('#dupOverlay');
+if(dupOverlayEl) dupOverlayEl.addEventListener('click', e=>{
+  if(!pendingDupe) return;
+  if(e.target.closest('[data-close]') || e.target === dupOverlayEl){
+    e.stopPropagation(); e.preventDefault();
+    dupeCashOut();
+  }
+}, true);
 const fsSel = $('#fsSelect');
 if(fsSel) fsSel.addEventListener('change', ()=>{
   const it = state.items.find(x=>x.id===fsSel.value); if(!it) return;
@@ -2463,5 +2543,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: 1 Gamlet Platinum left'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7a7f7e7c55f8',t:'MTc5NDM4MTA0MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7a7f7e7c55f8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7ca9bf5a55f8',t:'MTc5NDM4MTEyOQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7ca9bf5a55f8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
