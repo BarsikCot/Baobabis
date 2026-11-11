@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="5581396a">
+<meta name="build" content="87713502">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
@@ -937,7 +937,8 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
 
   <div class="foot">
     <b>Baobabis</b> · The best Gamlet original market<br>
-    © 2026 · All drops are demo market mechanics
+    © 2026 · All drops are demo market mechanics<br>
+    build <b id="buildTag" style="font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em">—</b>
   </div>
 </div>
 
@@ -1593,7 +1594,8 @@ buildWheel();
 /* ---- odds depend on how many spins are committed to one roll (quick spin) ---- */
 const MULT_TIERS = [1,5,10,25];
 const MULT_BONUS = { 1:0, 5:18, 10:42, 25:110 };      /* % added to the top of the tier ladder */
-let spinMult = Number(localStorage.getItem('baobabis.mult') || 1);
+let spinMult = 1;
+try{ spinMult = Number(localStorage.getItem('baobabis.mult') || 1); }catch(e){}
 if(MULT_TIERS.indexOf(spinMult) < 0) spinMult = 1;
 
 function oddsFor(mult){
@@ -2873,20 +2875,34 @@ async function pullBoard(){
   }catch(e){}
 }
 
+/* ================= ERROR SURFACE ================= */
+let bootErrors = 0;
+window.addEventListener('error', (e)=>{
+  bootErrors++;
+  if(bootErrors > 3) return;
+  const msg = (e && (e.message || (e.error && e.error.message))) || 'unknown error';
+  try{ toast('Script error: ' + msg.slice(0,90), 'gray'); }catch(_){}
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  try{ toast('Request failed: ' + String((e.reason && e.reason.message) || e.reason).slice(0,80), 'gray'); }catch(_){}
+});
+
 /* ================= AUTO UPDATE (Telegram webview caches aggressively) ================= */
 const BUILD = (document.querySelector('meta[name="build"]')||{}).content || 'dev';
 function checkForUpdate(retry){
   if(location.protocol !== 'http:' && location.protocol !== 'https:') return;   /* file:// preview */
-  fetch('version.json?t=' + Date.now(), { cache:'no-store' })
+  fetch('version.json?t=' + Date.now(), { cache:'no-store', headers:{'Cache-Control':'no-cache'} })
     .then(r => r.ok ? r.json() : null)
     .then(j => {
       if(!j || !j.build || j.build === BUILD) return;
       const key = 'baobabis.reloaded.' + j.build;
-      if(sessionStorage.getItem(key)){                 /* already tried once for this build */
+      let seen = false;
+      try{ seen = !!sessionStorage.getItem(key); }catch(e){}
+      if(seen){                                        /* already tried once for this build */
         toast('Update ready — reopen the app to load it', 'gray');
         return;
       }
-      sessionStorage.setItem(key, '1');
+      try{ sessionStorage.setItem(key, '1'); }catch(e){}
       const url = location.pathname + '?v=' + encodeURIComponent(j.build) + (location.hash || '');
       location.replace(url);
     })
@@ -2921,6 +2937,7 @@ showHero();
 setInterval(()=>{ heroIdx++; showHero(); },4500);
 $('#dmHeroTile').innerHTML='<span class="lock">'+LOCK_SVG+'</span>';
 $('#dmHeroCode').textContent='Hidden until you own a code';
+const bt = $('#buildTag'); if(bt) bt.textContent = BUILD;
 renderInventory();
 renderShop();
 renderStats();
@@ -2946,5 +2963,5 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMa
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: ' + Math.max(0, LIMITED_DROPS-(tasks.drops||0)) + ' Gamlet Platinum left for you'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bcfe2d97c87ca',t:'MTc5NDM4NDUzOA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bcfe2d97c87ca',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58bdb88393687ca',t:'MTc5NDM4NTAxNQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58bdb88393687ca',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
