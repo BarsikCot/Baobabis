@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="build" content="eff3a9d1">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
@@ -19,7 +20,7 @@
   --serif:"Bodoni 72","Didot","Playfair Display","Times New Roman",Georgia,serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--black);color:var(--white)}
+html,body{background:var(--black);color:var(--white);overflow-x:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;overscroll-behavior-y:none;min-height:100dvh}
 body.locked{overflow:hidden}
@@ -112,7 +113,7 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
 
 
 /* ================= TASKS / LIMITED DROP ================= */
-.acct{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:11px;border:1px solid var(--line2);
+.acct{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;max-width:100%;padding:7px 12px;border-radius:11px;border:1px solid var(--line2);
   background:#0c0c0c;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
 .acct b{color:#fff;font-weight:900}
 .acct .dotp{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.8s infinite}
@@ -287,7 +288,9 @@ h2{font-size:26px} h3{font-size:18px;letter-spacing:-.02em}
 .tier-row .rank{font-size:9.5px;font-weight:900;letter-spacing:.08em;color:var(--muted2);white-space:nowrap;text-align:right}
 
 /* inventory */
-.chips{display:flex;gap:7px;padding:2px 0 12px;justify-content:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;gap:7px;padding:2px 0 12px;mask-image:linear-gradient(90deg,#000 88%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.chips::-webkit-scrollbar{display:none}
+.chips .chip{flex:0 0 auto}
 .chip{flex:0 0 auto;height:32px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:#080808;
   color:var(--muted);font-size:11.5px;font-weight:800;transition:all .22s var(--ease)}
 .chip.active{background:#fff;color:#000;border-color:#fff}
@@ -438,6 +441,59 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
   .topbar-in .icon-btn{display:none}
   .spin-top-ico,.spin-top-ico svg{width:19px;height:19px}
 }
+
+/* ================= ECONOMY: market / leaderboard / sell ================= */
+.tabbar-in{grid-template-columns:repeat(6,1fr)}
+.tab span{font-size:8.5px}
+.sell-row{display:flex;gap:8px;margin-top:12px}
+.sell-row .btn{flex:1;min-height:44px;font-size:12.5px;border-radius:12px}
+.btn-sell{background:#fff;color:#000;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
+.btn-list{background:#111;color:#fff;border:1px solid var(--line2)}
+.price-in{height:44px;border-radius:12px;border:1px solid var(--line2);background:#0b0b0b;color:#fff;
+  padding:0 12px;font-family:ui-monospace,Menlo,monospace;font-size:14px;letter-spacing:.08em;text-align:center;
+  width:100%;min-width:0}
+.price-in:focus{outline:none;border-color:#fff}
+.mk-item{display:flex;align-items:center;gap:11px;padding:10px;border-radius:15px;border:1px solid var(--line);
+  background:var(--card);text-align:left;margin-bottom:8px;transition:border-color .25s,background .25s}
+.mk-item:hover{border-color:var(--line2);background:var(--card2)}
+.mk-item .th{width:44px;flex:0 0 auto;border-radius:5px;overflow:hidden;box-shadow:0 6px 16px -10px #000,0 0 0 1px rgba(255,255,255,.16)}
+.mk-item .th .gcard{max-width:none;width:100%;border-radius:5px;box-shadow:none;pointer-events:none;text-shadow:none}
+.mk-item .bd{flex:1;min-width:0}
+.mk-item .bd b{display:block;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-item .bd span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-item .pr{flex:0 0 auto;text-align:right}
+.mk-item .pr b{display:block;font-size:13.5px;font-weight:900;font-variant-numeric:tabular-nums}
+.mk-item .pr button{margin-top:5px;height:28px;padding:0 12px;border-radius:8px;background:#fff;color:#000;
+  font-size:11px;font-weight:900;transition:transform .2s var(--spring),background .2s}
+.mk-item .pr button:hover{background:#dcdcdc}
+.mk-item .pr button:active{transform:scale(.93)}
+.mk-item.mine{border-color:rgba(255,255,255,.34);background:#101010}
+.mk-item .pr button.ghost{background:transparent;color:#fff;border:1px solid var(--line2)}
+.lb-row{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);margin-bottom:8px;text-align:left;transition:border-color .25s,background .25s,transform .3s var(--ease)}
+.lb-row.me{border-color:#fff;background:#101010;box-shadow:0 0 0 1px rgba(255,255,255,.5)}
+.lb-row .rk{width:26px;flex:0 0 auto;text-align:center;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--muted)}
+.lb-row .rk.top1,.lb-row .rk.top2,.lb-row .rk.top3{color:#fff}
+.lb-row .rk b{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:5px;background:#fff;color:#000;font-size:11px;font-weight:900}
+.lb-row .rk .md{font-size:15px}
+.lb-row .av{width:30px;height:30px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;background:#1a1a1a;
+  color:#fff;font-size:12px;font-weight:900;overflow:hidden}
+.lb-row .av img{width:100%;height:100%;object-fit:cover}
+.lb-row .bd{flex:1;min-width:0}
+.lb-row .bd b{display:block;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row .bd span{display:block;font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.03em}
+.lb-row .vl{flex:0 0 auto;text-align:right}
+.lb-row .vl b{display:block;font-size:13.5px;font-weight:900;font-variant-numeric:tabular-nums}
+.lb-row .vl span{display:block;font-size:9.5px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+.mk-empty,.lb-empty{text-align:center;padding:26px 14px;border:1px dashed var(--line);border-radius:15px;
+  color:var(--muted);font-size:12px;line-height:1.6}
+.eco-note{display:flex;gap:10px;align-items:flex-start;text-align:left;padding:12px 13px;border-radius:14px;
+  border:1px solid var(--line);background:var(--card);margin-top:10px}
+.eco-note .ic{width:30px;height:30px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;background:#151515;
+  border:1px solid var(--line2)}
+.eco-note .ic svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.eco-note p{font-size:11.5px;line-height:1.55;color:var(--muted)}
+.eco-note p b{color:#fff}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .rv{opacity:1;transform:none}
@@ -467,7 +523,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
         </span>
         <span class="spin-top-tx">Free <b>Spin</b></span>
       </button>
-      <div class="pill-btn" id="balBtn" title="Balance" data-go="store"><span class="dot"></span><span class="bt"><span id="balTxt">3 000</span> B</span></div>
+      <div class="pill-btn" id="balBtn" title="Balance" data-go="store"><span class="dot"></span><span class="bt"><span id="balTxt">0</span> B</span></div>
       <button class="icon-btn" data-go="inventory" aria-label="Inventory">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 8h18l-1.4 12.2a2 2 0 0 1-2 1.8H6.4a2 2 0 0 1-2-1.8L3 8Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/>
@@ -623,7 +679,7 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <div class="center">
       <div class="eyebrow rv"><i></i>Store</div>
       <h2 class="rv d1" style="margin-top:10px">Buy by Data Matrix</h2>
-      <p class="sub rv d1" style="margin-top:8px">A code is hidden until you own the original. Already holding a card? Enter the code printed under its Data Matrix to activate it.</p>
+      <p class="sub rv d1" style="margin-top:8px">A code is hidden until you own the original. Balance comes only from selling cards on the market. Already holding a card? Enter the code printed under its Data Matrix to activate it.</p>
     </div>
 
     <div class="dm-hero rv d2" style="margin-top:16px">
@@ -660,10 +716,70 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
           <div class="pp"><b>149 B</b><button data-buy="spins">Buy</button></div>
         </div>
         <div class="pack">
-          <div class="pi">＋</div>
-          <div class="pt"><b>Balance top-up</b><span>+1 000 B demo balance for the shop</span></div>
-          <div class="pp"><b>Free</b><button data-buy="topup">Claim</button></div>
+          <div class="pi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 7.5-8"/><path d="M14.5 3H21v6.5"/></svg></div>
+          <div class="pt"><b>Earn B by selling</b><span>Quick sell instantly or set your own price on the market</span></div>
+          <div class="pp"><b>0 B start</b><button data-go="market">Market</button></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============ MARKET ============ -->
+  <section class="page" data-page="market">
+    <div class="center">
+      <div class="eyebrow rv"><i></i>Market</div>
+      <h2 class="rv d1" style="margin-top:10px">Player market</h2>
+      <p class="sub rv d1" style="margin-top:8px">Every card here is one original with its own Data Matrix. Sell instantly or put your own price.</p>
+    </div>
+
+    <div class="sum-grid rv d2" style="margin-top:14px">
+      <div class="sum"><span>Your balance</span><b id="mkBal">0 B</b></div>
+      <div class="sum"><span>On sale</span><b id="mkCount">0</b></div>
+      <div class="sum"><span>Your lots</span><b id="mkMine">0</b></div>
+      <div class="sum"><span>Cards</span><b id="mkItems">0</b></div>
+    </div>
+
+    <div class="card rv d2" style="margin-top:12px">
+      <div class="card-title"><h3>Quick sell</h3><span class="badge-lite">instant</span></div>
+      <p class="sub" style="font-size:11.5px;margin:0 0 10px;text-align:left">Pick a card from your collection — the site buys it at its market value immediately, no waiting. Common cards sell below value, rare ones above.</p>
+      <select id="fsSelect" class="price-in" style="text-align:left;font-family:inherit;letter-spacing:0;-webkit-appearance:none;appearance:none"></select>
+      <div class="sell-row">
+        <button class="btn btn-sell" id="fsDo">Sell now</button>
+        <button class="btn btn-list" id="fsToList">Put on market</button>
+      </div>
+      <div class="hint" id="fsHint" style="margin-top:9px;text-align:left">—</div>
+    </div>
+
+    <div class="section" style="padding-top:22px">
+      <div class="eyebrow rv"><i></i>Listings</div>
+      <h2 class="rv d1" style="margin-top:10px;font-size:21px">On sale now</h2>
+      <div class="chips rv d2" style="margin-top:12px" id="mkChips">
+        <button class="chip active" data-mk="all">All</button>
+        <button class="chip" data-mk="mine">My lots</button>
+        <button class="chip" data-mk="Basic">Basic</button>
+        <button class="chip" data-mk="Epic">Epic</button>
+        <button class="chip" data-mk="Mythic">Mythic</button>
+        <button class="chip" data-mk="Platinum">Platinum</button>
+        <button class="chip" data-mk="Legendary">Legendary</button>
+      </div>
+      <div class="rv d2" id="mkList" style="margin-top:12px;text-align:left"></div>
+    </div>
+
+    <div class="rule"></div>
+
+    <div class="section">
+      <div class="eyebrow rv"><i></i>Leaderboard</div>
+      <h2 class="rv d1" style="margin-top:10px;font-size:21px">Top collectors</h2>
+      <p class="sub rv d1" style="margin-top:8px">Ranked by the total value of cards a player holds. Updated live.</p>
+      <div class="chips rv d2" style="margin-top:12px" id="lbChips">
+        <button class="chip active" data-lb="value">By value</button>
+        <button class="chip" data-lb="count">By cards</button>
+      </div>
+      <div class="rv d2" id="lbList" style="margin-top:12px;text-align:left"><div class="lb-empty">Loading players…</div></div>
+      <div class="eco-note rv d3">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 17.5 9 11l4 4 7.5-8"/><path d="M14.5 3H21v6.5"/></svg></span>
+        <p><b>Cards are the only currency.</b> Balance is earned by selling originals — quick sell or your own price on the market. Spend it in the shop on Data Matrix codes.</p>
       </div>
     </div>
   </section>
@@ -755,6 +871,9 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <button class="tab" data-go="store">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><path d="M14 14h3v3h-3zM20 17v4h-4M17 14v.01"/></svg><span>Store</span>
     </button>
+    <button class="tab" data-go="market">
+      <svg viewBox="0 0 24 24"><path d="M3.5 20.5V10M9 20.5V4.5M14.5 20.5v-7M20 20.5V7.5"/><path d="M3 20.5h17.5"/></svg><span>Market</span>
+    </button>
     <button class="tab" data-go="info">
       <svg viewBox="0 0 24 24"><path d="M4 6.5h10.5"/><path d="M4 6.5v11.5h11"/><path d="M9 12.6l2.2 2.2 4.6-4.6"/><circle cx="18.4" cy="6.5" r="2.1"/></svg><span>Tasks</span>
     </button>
@@ -795,7 +914,12 @@ body.locked #toasts{opacity:0;transition:opacity .2s}
     <div style="display:flex;justify-content:center;margin-top:12px">
       <div style="width:96px;height:96px;background:#fff;border-radius:10px;padding:8px" id="imDm"></div>
     </div>
-    <div class="acts" style="margin-top:14px"><button class="btn btn-white" data-close>Close</button></div>
+    <div class="sell-row" style="margin-top:14px">
+      <button class="btn btn-sell" id="imFastSell">Sell now</button>
+      <button class="btn btn-list" id="imToList">List</button>
+    </div>
+    <div class="hint" id="imSellHint" style="margin-top:8px">—</div>
+    <div class="acts" style="margin-top:10px"><button class="btn btn-white" data-close>Close</button></div>
   </div>
 </div>
 
@@ -888,7 +1012,7 @@ const IS_TG = !!USER;
 const KEY='baobabis.dm.v1.'+UID;
 const TKEY='baobabis.tasks.v1.'+UID;
 
-let state = {balance:3000, spins:1, spinsMade:0, items:[]};
+let state = {balance:0, spins:1, spinsMade:0, items:[]};
 try{ const raw=localStorage.getItem(KEY); if(raw) state=Object.assign(state,JSON.parse(raw)); }catch(e){}
 if(!Array.isArray(state.items)) state.items=[];
 let cloudReady = false;
@@ -957,28 +1081,85 @@ function skinBox(size, origin, uvMap){
 }
 function uvQuad(uv, tex){ const [u,v]=uv, [tw,th]=tex; return [[u,v],[u+tw,v],[u+tw,v+th],[u,v+th]]; }
 
+/* ---- slim (3 px arm) model, UV tables checked against the 64x64 atlas ---- */
 const MODEL = [];
-function addPart(size, origin, uvMap, overlay){
-  MODEL.push({ quads: skinBox(size, origin, uvMap), overlay: !!overlay });
+function addPart(size, origin, uv, overlay){
+  MODEL.push({ size, origin, uv, overlay:!!overlay });
 }
-addPart([8,8,8],  [-4,-4,-4], {front:[8,8], right:[16,8], back:[24,8], left:[0,8], up:[8,0], down:[16,0]});                 // head
-addPart([8,12,4], [-4,4,-2],  {front:[20,20],right:[28,20],back:[32,20],left:[16,20],up:[20,16],down:[28,16]});            // body
-addPart([4,12,4], [4,4,-2],   {front:[44,20],right:[48,20],back:[52,20],left:[40,20],up:[44,16],down:[52,16]});            // right arm (+X)
-addPart([4,12,4], [-8,4,-2],  {front:[36,52],right:[40,52],back:[44,52],left:[32,52],up:[36,48],down:[44,48]});            // left arm (-X)
-addPart([4,12,4], [0,16,-2],  {front:[4,20], right:[8,20], back:[12,20], left:[0,20], up:[4,16], down:[12,16]});            // right leg
-addPart([4,12,4], [-4,16,-2], {front:[20,52],right:[24,52],back:[28,52],left:[16,52],up:[20,48],down:[28,48]});            // left leg
-/* second layer */
-addPart([8.5,8.5,8.5], [-4.25,-4.25,-4.25], {front:[40,8], right:[48,8], back:[56,8], left:[32,8], up:[40,0], down:[48,0]}, true);   // hat
-addPart([8.5,12.5,4.5], [-4.25,3.75,-2.25], {front:[20,36],right:[28,36],back:[32,36],left:[16,36],up:[20,32],down:[28,32]}, true);  // jacket
-addPart([4.5,12.5,4.5], [3.75,3.75,-2.25],  {front:[44,36],right:[48,36],back:[52,36],left:[40,36],up:[44,32],down:[52,32]}, true);  // right sleeve
-addPart([4.5,12.5,4.5], [-8.25,3.75,-2.25], {front:[52,52],right:[56,52],back:[60,52],left:[48,52],up:[52,48],down:[60,48]}, true);  // left sleeve
-addPart([4.5,12.5,4.5], [-0.25,15.75,-2.25],{front:[4,36], right:[8,36], back:[12,36], left:[0,36], up:[4,32], down:[12,32]}, true);  // right pant
-addPart([4.5,12.5,4.5], [-4.25,15.75,-2.25],{front:[4,52], right:[8,52], back:[12,52], left:[0,52], up:[4,48], down:[12,48]}, true);  // left pant
+const ARM = 3, ARM_SPAN = 8;                       /* slim: arm is 3 px wide, total span 8 */
+addPart([8,8,8],      [-4,-4,-4],                {front:[8,8], right:[16,8], back:[24,8], left:[0,8],  up:[8,0],  down:[16,0]});
+addPart([8,12,4],     [-4,4,-2],                 {front:[20,20],right:[28,20],back:[32,20],left:[16,20],up:[20,16],down:[28,16]});
+addPart([ARM,12,4],   [4,4,-2],                  {front:[44,20],right:[47,20],back:[51,20],left:[40,20],up:[44,16],down:[47,16]});
+addPart([ARM,12,4],   [-(4+ARM),4,-2],           {front:[36,52],right:[39,52],back:[43,52],left:[32,52],up:[36,48],down:[39,48]});
+addPart([4,12,4],     [0,16,-2],                 {front:[4,20], right:[8,20], back:[12,20],left:[0,20], up:[4,16], down:[8,16]});
+addPart([4,12,4],     [-4,16,-2],                {front:[20,52],right:[24,52],back:[28,52],left:[16,52],up:[20,48],down:[24,48]});
+/* second layer (inflated by .5) */
+const IN = 0.25;
+addPart([8.5,8.5,8.5],        [-4.25,-4.25,-4.25],          {front:[40,8], right:[48,8], back:[56,8], left:[32,8], up:[40,0],  down:[48,0]},  true);
+addPart([8.5,12.5,4.5],       [-4.25,3.75,-2.25],           {front:[20,36],right:[28,36],back:[32,36],left:[16,36],up:[20,32], down:[28,32]}, true);
+addPart([ARM+.5,12.5,4.5],    [4-IN,3.75,-2.25],            {front:[44,36],right:[47,36],back:[51,36],left:[40,36],up:[44,32], down:[47,32]}, true);
+addPart([ARM+.5,12.5,4.5],    [-(4+ARM)-IN,3.75,-2.25],     {front:[52,52],right:[55,52],back:[59,52],left:[48,52],up:[52,48], down:[55,48]}, true);
+addPart([4.5,12.5,4.5],       [-0.25,15.75,-2.25],          {front:[4,36], right:[8,36], back:[12,36],left:[0,36], up:[4,32],  down:[8,32]},  true);
+addPart([4.5,12.5,4.5],       [-4.25,15.75,-2.25],          {front:[4,52], right:[8,52], back:[12,52],left:[0,52], up:[4,48],  down:[8,48]},  true);
 
-const SHADE = { front:.97, right:.86, back:.66, left:.74, up:1, down:.5 };
+const SHADE = { front:.97, right:.87, back:.68, left:.76, up:1, down:.55 };
+const FACE_UV = {
+  front:(s,o,u)=>[u[0],u[1],s[0],s[1]],
+  right:(s,o,u)=>[u[0],u[1],s[2],s[1]],
+  back: (s,o,u)=>[u[0],u[1],s[0],s[1]],
+  left: (s,o,u)=>[u[0],u[1],s[2],s[1]],
+  up:   (s,o,u)=>[u[0],u[1],s[0],s[2]],
+  down: (s,o,u)=>[u[0],u[1],s[0],s[2]]
+};
+/* corners of each box face, outward winding */
+function faceCorners(key, size, origin){
+  const [sx,sy,sz] = size, [ox,oy,oz] = origin;
+  const X0=ox, X1=ox+sx, Y0=oy, Y1=oy+sy, Z0=oz, Z1=oz+sz;
+  switch(key){
+    case 'front': return [[X0,Y0,Z0],[X1,Y0,Z0],[X1,Y1,Z0],[X0,Y1,Z0]];
+    case 'right': return [[X1,Y0,Z0],[X1,Y0,Z1],[X1,Y1,Z1],[X1,Y1,Z0]];
+    case 'back':  return [[X1,Y0,Z1],[X0,Y0,Z1],[X0,Y1,Z1],[X1,Y1,Z1]];
+    case 'left':  return [[X0,Y0,Z1],[X0,Y0,Z0],[X0,Y1,Z0],[X0,Y1,Z1]];
+    case 'up':    return [[X0,Y0,Z1],[X1,Y0,Z1],[X1,Y0,Z0],[X0,Y0,Z0]];
+    case 'down':  return [[X0,Y1,Z0],[X1,Y1,Z0],[X1,Y1,Z1],[X0,Y1,Z1]];
+  }
+  return [[0,0,0],[1,0,0],[1,1,0],[0,1,0]];
+}
+
+/* Supersampled, pre-shaded tiles: one tiny canvas per face.
+   Drawing isolated tiles means no texture bleeding and no clipped seams. */
+const SUP = 6;
+const TILES = [];
+function buildTiles(){
+  TILES.length = 0;
+  const src = document.createElement('canvas');
+  src.width = 64; src.height = 64;
+  src.getContext('2d').drawImage(SKIN_IMG, 0, 0);
+  MODEL.forEach(part=>{
+    Object.keys(FACE_UV).forEach(key=>{
+      const [u,v,tw,th] = FACE_UV[key](part.size, part.origin, part.uv[key]);
+      if(tw<=0 || th<=0) return;
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(tw*SUP));
+      cv.height = Math.max(1, Math.round(th*SUP));
+      const c = cv.getContext('2d');
+      c.imageSmoothingEnabled = false;
+      c.drawImage(src, u, v, tw, th, 0, 0, cv.width, cv.height);
+      const sh = SHADE[key] == null ? 1 : SHADE[key];
+      if(sh < 0.999){
+        c.globalCompositeOperation = 'source-atop';
+        c.fillStyle = 'rgba(0,0,0,' + (1-sh).toFixed(3) + ')';
+        c.fillRect(0, 0, cv.width, cv.height);
+        c.globalCompositeOperation = 'source-over';
+      }
+      TILES.push({ img:cv, corners:faceCorners(key, part.size, part.origin), overlay:part.overlay });
+    });
+  });
+}
+SKIN_IMG.onload = ()=>{ skinReady = true; buildTiles(); };
+if(SKIN_IMG.complete && SKIN_IMG.naturalWidth) { skinReady = true; buildTiles(); }
 
 function affineFromQuad(s, d){
-  // s: 3 source points, d: 3 destination points -> setTransform args
   const [p0,p1,p2] = s, [q0,q1,q2] = d;
   const dx1 = p1[0]-p0[0], dy1 = p1[1]-p0[1];
   const dx2 = p2[0]-p0[0], dy2 = p2[1]-p0[1];
@@ -991,25 +1172,24 @@ function affineFromQuad(s, d){
   return [a, b, c, d2, q0[0] - a*p0[0] - c*p0[1], q0[1] - b*p0[0] - d2*p0[1]];
 }
 
-const _faceCanvas = document.createElement('canvas');
+let _faces = [];
 function renderSkin(canvas, yaw, pitch, zoom){
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,W,H);
-  if(!skinReady) return;
-  ctx.imageSmoothingEnabled = false;
+  if(!skinReady || !TILES.length) return;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-  const cx0 = W*0.5, cy0 = H*0.47;
-  const s = (zoom||1) * H / 40;
+  const cx0 = W*0.5, cy0 = H*0.48;
+  const s = (zoom||1) * H / 41;
   const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
   const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
-  const PIVOT = 12;
+  const PIVOT = 11.5;
 
-  /* orthographic projection: every face stays a parallelogram -> one affine blit, no seams */
   const project = (p)=>{
-    let [x,y,z] = p;
-    y -= PIVOT;
+    const x = p[0], y = p[1]-PIVOT, z = p[2];
     const x1 = x*cosY - z*sinY;
     const z1 = x*sinY + z*cosY;
     const y1 = y*cosP - z1*sinP;
@@ -1017,77 +1197,133 @@ function renderSkin(canvas, yaw, pitch, zoom){
     return [cx0 + x1*s, cy0 + y1*s, z2];
   };
 
-  const faces = [];
-  MODEL.forEach(part=>{
-    for(const key in part.quads){
-      const q = part.quads[key];
-      const pts = q.p.map(project);
-      let area = 0;
-      for(let i=0;i<4;i++){ const a = pts[i], b = pts[(i+1)%4]; area += a[0]*b[1] - b[0]*a[1]; }
-      if(area >= 0) continue;
-      const depth = pts.reduce((acc,p)=>acc+p[2],0)/4;
-      faces.push({ pts, depth, uvq: uvQuad(q.uv, q.tex), shade: SHADE[key]||1 });
-    }
-  });
-  faces.sort((a,b)=>a.depth-b.depth);
+  _faces.length = 0;
+  for(let i=0;i<TILES.length;i++){
+    const t = TILES[i];
+    const pts = [project(t.corners[0]), project(t.corners[1]), project(t.corners[2]), project(t.corners[3])];
+    /* signed area tells us whether the face points at the camera */
+    let area = 0;
+    for(let k=0;k<4;k++){ const a = pts[k], b = pts[(k+1)%4]; area += a[0]*b[1] - b[0]*a[1]; }
+    if(area <= 0.01) continue;                       /* back-facing */
+    const depth = (pts[0][2]+pts[1][2]+pts[2][2]+pts[3][2]) * 0.25;
+    _faces.push({ t, pts, depth: depth - (t.overlay ? 0.02 : 0) });
+  }
+  _faces.sort((a,b)=>b.depth-a.depth);   /* painter: farthest first */
 
-  faces.forEach(f=>{
-    const xs = f.pts.map(p=>p[0]), ys = f.pts.map(p=>p[1]);
-    const bx = Math.floor(Math.min(...xs))-1, by = Math.floor(Math.min(...ys))-1;
-    const bw = Math.ceil(Math.max(...xs)-bx)+2, bh = Math.ceil(Math.max(...ys)-by)+2;
-    if(bw<=0 || bh<=0) return;
-    _faceCanvas.width = bw; _faceCanvas.height = bh;
-    const fc = _faceCanvas.getContext('2d');
-    fc.setTransform(1,0,0,1,0,0); fc.clearRect(0,0,bw,bh); fc.imageSmoothingEnabled = false;
-
-    const P = f.pts.map(p=>[p[0]-bx, p[1]-by]);
-    const src = [ f.uvq[0], f.uvq[1], f.uvq[2] ];      // uv top-left, top-right, bottom-right
-    const m = affineFromQuad(src, [P[0], P[1], P[2]]);
-    if(!m) return;
-    fc.save();
-    fc.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-    const [u0,v0] = f.uvq[0], [u1,v1] = f.uvq[2];
-    fc.beginPath(); fc.rect(u0, v0, u1-u0, v1-v0); fc.clip();
-    fc.drawImage(SKIN_IMG, u0, v0, u1-u0, v1-v0, u0, v0, u1-u0, v1-v0);
-    fc.restore();
-
-    if(f.shade < 0.999){
-      fc.setTransform(1,0,0,1,0,0);
-      fc.globalCompositeOperation = 'source-atop';
-      fc.fillStyle = 'rgba(0,0,0,'+(1-f.shade).toFixed(3)+')';
-      fc.fillRect(0,0,bw,bh);
-      fc.globalCompositeOperation = 'source-over';
-    }
-    ctx.drawImage(_faceCanvas, bx, by);
-  });
+  for(let i=0;i<_faces.length;i++){
+    const f = _faces[i];
+    const img = f.t.img;
+    const sw = img.width, sh = img.height;
+    const m = affineFromQuad([[0,0],[sw,0],[sw,sh]], [f.pts[0], f.pts[1], f.pts[2]]);
+    if(!m) continue;
+    ctx.save();
+    ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+    /* +.5px of texture overlap on every edge kills hairline gaps between neighbours */
+    ctx.drawImage(img, 0, 0, sw, sh, -0.6, -0.6, sw + 1.2, sh + 1.2);
+    ctx.restore();
+  }
+  ctx.setTransform(1,0,0,1,0,0);
 }
 
-/* draggable viewer */
+/* draggable viewer: damped target angles, inertia, renders only when it moves */
 function mountSkinViewer(stageEl, canvasEl){
   if(!stageEl || !canvasEl) return null;
-  let yaw = -0.42, pitch = 0.06, raf = 0, dragging = false, lastX = 0, lastY = 0, auto = true, idle = 0;
-  const resize = ()=>{ const r = stageEl.getBoundingClientRect(); canvasEl.width = Math.max(160, Math.round(r.width*2)); canvasEl.height = Math.max(160, Math.round(r.height*2)); };
-  const loop = ()=>{
-    if(auto && !dragging){ idle += 1; if(idle > 90) yaw += 0.006; }
-    renderSkin(canvasEl, yaw, pitch, 1.02);
-    raf = requestAnimationFrame(loop);
+  const st = { yaw:-0.42, pitch:0.07, yawT:-0.42, pitchT:0.07, vy:0, vp:0, zoom:1.04, dragging:false, last:-1, dirty:true };
+  let raf = 0, lastT = 0, lastX = 0, lastY = 0, lastMove = 0, hidden = false;
+
+  const resize = ()=>{
+    const r = stageEl.getBoundingClientRect();
+    if(!r.width || !r.height) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(r.width*dpr), h = Math.round(r.height*dpr);
+    if(canvasEl.width !== w || canvasEl.height !== h){
+      canvasEl.width = w; canvasEl.height = h; st.dirty = true;
+    }
   };
-  resize();
   new ResizeObserver(resize).observe(stageEl);
-  stageEl.addEventListener('pointerdown', e=>{ dragging = true; auto = false; idle = 0; lastX = e.clientX; lastY = e.clientY; stageEl.classList.add('drag'); stageEl.setPointerCapture(e.pointerId); });
-  stageEl.addEventListener('pointermove', e=>{
-    if(!dragging) return;
-    yaw += (e.clientX - lastX) * 0.012;
-    pitch = Math.max(-0.55, Math.min(0.55, pitch + (e.clientY - lastY) * 0.008));
-    lastX = e.clientX; lastY = e.clientY;
+  if(typeof IntersectionObserver === 'function'){
+    new IntersectionObserver(es=>{ hidden = !es[0].isIntersecting; }, {threshold:0}).observe(stageEl);
+  }
+
+  const loop = (ts)=>{
+    raf = requestAnimationFrame(loop);
+    if(ts === undefined) ts = performance.now();
+    const dt = Math.min(0.05, lastT ? (ts - lastT)/1000 : 0.016);
+    lastT = ts;
+    if(hidden) return;
+
+    if(!st.dragging){
+      /* inertia from the last fling */
+      if(Math.abs(st.vy) > 0.0004 || Math.abs(st.vp) > 0.0004){
+        st.yawT += st.vy; st.pitchT = Math.max(-0.62, Math.min(0.62, st.pitchT + st.vp));
+        const f = Math.pow(0.9, dt*60);
+        st.vy *= f; st.vp *= f;
+        if(Math.abs(st.vy) < 0.0006) st.vy = 0;
+        if(Math.abs(st.vp) < 0.0006) st.vp = 0;
+        st.dirty = true;
+      } else if(ts - lastMove > 1600){
+        st.yawT += dt*0.32;                 /* gentle idle turntable */
+        st.dirty = true;
+      }
+    }
+
+    /* critically damped follow -> the model sticks to the finger but never jitters */
+    const k = 1 - Math.exp(-dt*16);
+    const dy = st.yawT - st.yaw, dp = st.pitchT - st.pitch;
+    if(Math.abs(dy) > 1e-5 || Math.abs(dp) > 1e-5){
+      st.yaw += dy*k; st.pitch += dp*k; st.dirty = true;
+    }
+    if(st.dirty){
+      renderSkin(canvasEl, st.yaw, st.pitch, st.zoom);
+      st.dirty = false;
+    }
+  };
+
+  stageEl.addEventListener('pointerdown', e=>{
+    st.dragging = true; lastX = e.clientX; lastY = e.clientY;
+    st.vy = 0; st.vp = 0; lastMove = performance.now();
+    stageEl.classList.add('drag');
+    if(stageEl.setPointerCapture) stageEl.setPointerCapture(e.pointerId);
     haptic('light');
   });
-  const stop = ()=>{ dragging = false; stageEl.classList.remove('drag'); idle = 0; };
+  stageEl.addEventListener('pointermove', e=>{
+    if(!st.dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    if(e.cancelable && Math.abs(dx) > Math.abs(dy)) e.preventDefault();
+    st.yawT += dx * 0.0115;
+    st.pitchT = Math.max(-0.62, Math.min(0.62, st.pitchT + dy * 0.0075));
+    st.vy = dx * 0.0016;
+    st.vp = dy * 0.0009;
+    lastMove = performance.now();
+    st.dirty = true;
+  });
+  const stop = ()=>{
+    if(!st.dragging) return;
+    st.dragging = false;
+    stageEl.classList.remove('drag');
+    lastMove = performance.now();
+    const flick = Math.abs(st.vy) + Math.abs(st.vp);
+    if(flick > 0.02) haptic('light');
+  };
   stageEl.addEventListener('pointerup', stop);
   stageEl.addEventListener('pointercancel', stop);
+  stageEl.addEventListener('pointerleave', stop);
+  stageEl.addEventListener('wheel', e=>{
+    if(!stageEl.dataset.zoomable) return;
+    e.preventDefault();
+    st.zoom = Math.max(0.7, Math.min(1.9, st.zoom - e.deltaY*0.0012));
+    st.dirty = true;
+  }, {passive:false});
+
+  resize();
   if(!raf) loop();
-  return { stage: stageEl, canvas: canvasEl };
+  st.render = ()=>{ st.dirty = true; };
+  return st;
 }
+
+/* warm up the tiles as soon as possible */
+setTimeout(()=>{ if(skinReady && !TILES.length) buildTiles(); }, 60);
 
 /* ================= MINECRAFT PROFILE ================= */
 async function resolveProfile(nick){
@@ -1184,6 +1420,7 @@ function taskState(id){
 
 /* ================= NAV ================= */
 function go(page){
+  if(page==='market'){ setTimeout(()=>{ pullMarket(); claimPayouts(); pullBoard(); }, 40); }
   $$('.page').forEach(p=>p.classList.toggle('active', p.dataset.page===page));
   $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.go===page));
   window.scrollTo({top:0,behavior:'instant'});
@@ -1231,8 +1468,9 @@ function setStatus(cls,txt){ $('#status').className='status '+cls; $('#statusTxt
 
 function spin(){
   if(spinning) return;
-  if(state.spins<=0){ toast('No spins left — grab a booster','gray'); haptic('warn'); return; }
-  spinning=true; state.spins--; save(); renderStats();
+  spinning = true;
+  if(state.spins<=0){ spinning = false; toast('No spins left — grab a booster','gray'); haptic('warn'); return; }
+  state.spins--; save(); renderStats();
   const tier=weightedTier();
   const idxs=ORDER.map((t,i)=>t===tier?i:-1).filter(i=>i>=0);
   const idx=pick(idxs), center=idx*SEG_A+SEG_A/2, jitter=(Math.random()-.5)*SEG_A*.6;
@@ -1247,9 +1485,12 @@ function spin(){
 }
 
 function onDrop(tier){
-  const tpl = pick(cardsOfTier(tier));
-  const item = { id:'c-'+Date.now().toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier,
-    num:tpl.num, photo:tpl.photo, value:Math.round(TIERS[tier].value*(.85+Math.random()*.5)),
+  const owned = ownedCodes();
+  const pool = cardsOfTier(tier);
+  const fresh = pool.filter(c=>!owned.has(c.code));
+  const tpl = pick(fresh.length ? fresh : pool);
+  const item = { id:'c-'+Date.now().toString(36)+rnd(9999).toString(36), code:tpl.code, tier:tpl.tier,
+    num:tpl.num, photo:tpl.photo, value:PRICE[tier],
     ts:Date.now(), origin:'Free spin' };
   state.items.unshift(item); state.spinsMade++;
   save(); renderInventory(); renderStats(); renderShop();
@@ -1359,6 +1600,18 @@ $('#invGrid').addEventListener('click',e=>{
   $('#imSpecs').innerHTML=row('Tier',it.tier)+row('Value',fmt(it.value)+' B')+row('Data Matrix','<span class="dm-code">'+it.code+'</span>')+row('Owner','You · Baobabis');
   $('#imDm').innerHTML=dmSVG(it.code);
   $('#imDm').onclick=()=>{ $('#dmZoom').innerHTML=dmSVG(it.code); $('#dmZoomCode').textContent=it.code; openOverlay('#dmOverlay'); };
+  const hint=$('#imSellHint');
+  const quick=fastSellPrice(it);
+  const floor=minListPrice(it);
+  if(isLimited(it)){
+    hint.innerHTML='Physical 1 of 1 — trading is disabled for this card.';
+    $('#imFastSell').disabled=true; $('#imToList').disabled=true;
+  }else{
+    hint.innerHTML='Quick sell <b style="color:#fff">'+fmt(quick)+' B</b> instantly · market price from '+fmt(floor)+' B';
+    $('#imFastSell').disabled=false; $('#imToList').disabled=false;
+    $('#imFastSell').onclick=()=>{ closeAll(); doFastSell(it.id); };
+    $('#imToList').onclick=()=>{ closeAll(); openListSheet(it.id); };
+  }
   openOverlay('#itemOverlay'); haptic('light');
 });
 
@@ -1374,6 +1627,9 @@ function renderStats(){
   const hs=$('#homeSpins'); if(hs) hs.textContent=state.spins;
   $('#balTxt').textContent=fmt(state.balance);
   const b=$('#invBadge'); b.textContent=total; b.classList.toggle('on',total>0);
+  const mb=$('#mkBal'); if(mb) mb.textContent=fmt(state.balance)+' B';
+  renderLeaderboard();
+  pushBoard();
   enableBtn();
 }
 
@@ -1435,7 +1691,7 @@ function buyCard(code){
   if(state.balance<price){ toast('Not enough B — top up balance','gray'); haptic('warn'); return; }
   state.balance-=price;
   state.items.unshift({ id:'c-'+Date.now().toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num, photo:tpl.photo,
-    value:Math.round(TIERS[tpl.tier].value*1.15), ts:Date.now(), origin:'Data Matrix purchase' });
+    value:PRICE[tpl.tier], ts:Date.now(), origin:'Data Matrix purchase' });
   save(); renderInventory(); renderStats(); renderShop();
   heroCode=code;
   $('#dmHeroTile').classList.remove('locked');
@@ -1445,7 +1701,7 @@ function buyCard(code){
   showWin(state.items[0]);
 }
 
-const PACKS={ spins:{price:149, spins:3}, topup:{price:0, topup:1000} };
+const PACKS={ spins:{price:149, spins:3} };
 $$('[data-buy]').forEach(b=>b.addEventListener('click',()=>{
   const k=b.dataset.buy, p=PACKS[k];
   if(!p) return;
@@ -1488,7 +1744,7 @@ function redeemCode(raw){
   if(!tpl){ haptic('warn'); return toast('Unknown code — check the card','gray'); }
   if(ownedCodes().has(tpl.code)){ haptic('warn'); return toast('This original is already in your collection','gray'); }
   state.items.unshift({ id:'c-'+Date.now().toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num, photo:tpl.photo,
-    value:Math.round(TIERS[tpl.tier].value*1.15), ts:Date.now(), origin:'Data Matrix activation' });
+    value:PRICE[tpl.tier], ts:Date.now(), origin:'Data Matrix activation' });
   save(); renderInventory(); renderStats(); renderShop();
   heroCode=tpl.code;
   $('#dmHeroTile').classList.remove('locked');
@@ -1562,7 +1818,7 @@ function renderTasks(){
 }
 setInterval(()=>{
   if(!tasks.active) return;
-  const el = document.querySelector('#tmr-'+tasks.active.id);
+  const el = document.getElementById('tmr-'+tasks.active.id);
   const left = tasks.active.endsAt - Date.now();
   if(el && left > 0) el.textContent = fmtLeft(left)+' left';
   if(left <= 0){ renderTasks(); }
@@ -1656,7 +1912,7 @@ function claimLimited(nick){
   const tpl = { code, tier:'Platinum', num:1, photo: byCode('C7vN').photo, limited:true };
   if(!byCode(code)) EXTRA_CARDS.push(tpl);
   state.items.unshift({ id:'c-'+Date.now().toString(36), code, tier:'Platinum', num:1, photo:tpl.photo,
-    value:3900, ts:Date.now(), origin:'Limited drop' });
+    value:3900, ts:Date.now(), origin:'Limited drop', limited:true });
   save(); renderInventory(); renderStats(); renderShop();
 
   $('#limCard').innerHTML = cardHTML(tpl, {}, true);
@@ -1722,6 +1978,7 @@ async function flushCloud(){
   try{
     await fetch(cloudPath(), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   }catch(e){}
+  pushBoard();
   pushInFlight = false;
   if(pushDirty) flushCloud();
 }
@@ -1741,7 +1998,7 @@ async function syncProfile(){
     const remoteItems = (cloud.state && Array.isArray(cloud.state.items)) ? cloud.state.items.length : 0;
     const localItems = state.items.length;
     if(remoteNewer && (remoteItems >= localItems || !localItems)){
-      if(cloud.state) state = Object.assign({balance:3000, spins:1, spinsMade:0, items:[]}, cloud.state);
+      if(cloud.state) state = Object.assign({balance:0, spins:1, spinsMade:0, items:[]}, cloud.state);
       if(!Array.isArray(state.items)) state.items = [];
       try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
     }
@@ -1755,6 +2012,8 @@ async function syncProfile(){
   cloudReady = true;
   registerLimitedCard();
   renderInventory(); renderShop(); renderStats(); renderTasks();
+  renderMarket(); renderLeaderboard();
+  claimPayouts();
   flushCloud();
 }
 let whoOpen = false;
@@ -1792,6 +2051,368 @@ function renderIdentity(){
   }
 }
 
+
+/* ================= MARKET · QUICK SELL · LEADERBOARD ================= */
+const TRADES_MAX = 40;
+
+/* creator / owner tagging: a card bought from another player can be resold */
+function currentOwnerTag(){ return IS_TG ? ('tg'+USER.id) : ('dev'+DEVICE_ID.slice(-6)); }
+function rememberCreator(){
+  try{
+    const m = JSON.parse(localStorage.getItem('baobabis.creators')||'{}');
+    m[UID] = USER ? USER.name : 'Browser guest';
+    localStorage.setItem('baobabis.creators', JSON.stringify(m));
+  }catch(e){}
+}
+const creatorsMap = ()=>{ try{ return JSON.parse(localStorage.getItem('baobabis.creators')||'{}'); }catch(e){ return {}; } };
+function creatorName(it){
+  if(it.creator && it.creator.name) return it.creator.name;
+  const c = creatorsMap();
+  if(it.originUid && c[it.originUid]) return c[it.originUid];
+  if(it.origin && it.origin.indexOf('Data Matrix')===0) return 'Baobabis';
+  if(it.origin==='Limited drop') return 'Baobabis';
+  return 'Baobabis';
+}
+
+/* quick sell: instant liquidity. Commons below value, high tiers above. */
+const SELL_BONUS = {Basic:0.55, Rare:0.68, Epic:0.8, Mythic:0.92, Platinum:1.05, Legendary:1.2};
+const isLimited = it => !!(it && (it.limited || (byCode(it.code)||{}).limited));
+const fastSellPrice = it => Math.max(1, Math.round((it.value || PRICE[it.tier]) * (SELL_BONUS[it.tier]||0.7)));
+const minListPrice  = it => Math.max(1, Math.round((it.value || PRICE[it.tier]) * 0.5));
+const maxListPrice  = it => Math.max(minListPrice(it), Math.round((it.value || PRICE[it.tier]) * 3));
+
+/* --- listings (shared cloud node, cached locally so the UI never flashes) --- */
+let market = {};
+let mkFilter = 'all';
+let lbMode = 'value';
+
+function loadMarketCache(){
+  try{ market = JSON.parse(localStorage.getItem('baobabis.market.v1')||'{}') || {}; }catch(e){ market = {}; }
+  if(!market || typeof market !== 'object') market = {};
+  renderMarket();
+}
+function saveMarketCache(){
+  try{ localStorage.setItem('baobabis.market.v1', JSON.stringify(market)); }catch(e){}
+}
+/* collect money other players paid for your lots (idempotent: ids are remembered) */
+let claimingPayouts = false;
+const claimedIds = ()=>{ try{ return new Set(JSON.parse(localStorage.getItem('baobabis.claims.v1')||'[]')); }catch(e){ return new Set(); } };
+const rememberClaim = id=>{ try{ const s = claimedIds(); s.add(id); localStorage.setItem('baobabis.claims.v1', JSON.stringify([...s].slice(-200))); }catch(e){} };
+
+async function claimPayouts(){
+  if(claimingPayouts) return 0;
+  claimingPayouts = true;
+  try{
+    const r = await fetch(DB + '/payouts/' + encodeURIComponent(UID) + '.json?ts=' + Date.now());
+    if(!r.ok) return 0;
+    const j = await r.json();
+    if(!j || typeof j !== 'object') return 0;
+    const done = claimedIds();
+    const ids = Object.keys(j).filter(id=>!done.has(id));
+    if(!ids.length) return 0;
+    let total = 0;
+    for(const id of ids){
+      const pr = j[id] || {};
+      const amount = Math.round(Number(pr.amount) || 0);
+      rememberClaim(id);                       /* mark before crediting, so a retry can never double-pay */
+      if(amount > 0){
+        total += amount;
+        pushTrade({ type:'sell', code:pr.code||'', price:amount, tier:(byCode(pr.code)||{}).tier || null, from:pr.from||null });
+      }
+      fetch(DB + '/payouts/' + encodeURIComponent(UID) + '/' + id + '.json', { method:'DELETE' }).catch(()=>{});
+    }
+    if(total > 0){
+      state.balance += total;
+      save(); renderStats();
+      toast('Card sold · +'+fmt(total)+' B', 'ok');
+    }
+  }catch(e){ return 0; }
+  finally{ claimingPayouts = false; }
+  return 1;
+}
+
+async function pullMarket(){
+  try{
+    const r = await fetch(DB + '/market.json?ts=' + Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    market = (j && typeof j === 'object') ? j : {};
+    saveMarketCache();
+    renderMarket();
+  }catch(e){}
+}
+function renderMarket(){
+  const list = Object.keys(market).map(id=>Object.assign({ id }, market[id]))
+    .filter(l=>l && l.code && byCode(l.code))
+    .sort((a,b)=> (b.at||0) - (a.at||0));
+  const count=$('#mkCount'), mineList=$('#mkMine'), items=$('#mkItems');
+  if(count) count.textContent = list.length;
+  if(mineList) mineList.textContent = list.filter(l=>l.uid===UID).length;
+  if(items) items.textContent = state.items.length;
+  const hint=$('#fsHint');
+  const host=$('#mkList');
+  if(host){
+    const shown = list.filter(l=> mkFilter==='mine' ? l.uid===UID : (mkFilter==='all' ? true : byCode(l.code).tier===mkFilter));
+    host.innerHTML = shown.length ? shown.map(l=>{
+      const tpl = byCode(l.code);
+      const mine = l.uid===UID;
+      return `<div class="mk-item ${mine?'mine':''}" data-lot="${l.id}">
+        <span class="th">${cardHTML(tpl,{mini:true},true)}</span>
+        <span class="bd"><b>Gamlet ${tpl.tier} #${tpl.num}</b>
+          <span>${mine ? 'Your lot' : esc(l.seller || 'Player')} · ${timeAgo(l.at)}</span></span>
+        <span class="pr"><b>${fmt(l.price)} B</b>
+          <button data-buy-lot="${l.id}" class="${mine?'ghost':''}">${mine?'Withdraw':'Buy'}</button></span>
+      </div>`;
+    }).join('') : `<div class="mk-empty">${mkFilter==='mine' ? 'You have no lots on sale.<br>Open a card in your collection and press List.' : 'No lots yet. Be the first to list an original.'}</div>`;
+  }
+  refreshSellSelect();
+  if(hint) hint.innerHTML = hint.dataset.mode === 'list'
+    ? 'Listing hides the card from your collection until it sells or you withdraw it.'
+    : 'Quick sell pays instantly. Market listing lets you name the price.';
+}
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function timeAgo(ts){
+  if(!ts) return 'just now';
+  const s = Math.max(0, Math.round((Date.now()-ts)/1000));
+  if(s < 60) return s+'s ago';
+  if(s < 3600) return Math.round(s/60)+'m ago';
+  if(s < 86400) return Math.round(s/3600)+'h ago';
+  return Math.round(s/86400)+'d ago';
+}
+
+/* --- quick sell UI --- */
+function refreshSellSelect(){
+  const sel = $('#fsSelect'); if(!sel) return;
+  const sellable = state.items.filter(it=>!isLimited(it));
+  const keep = sel.value;
+  sel.innerHTML = sellable.length
+    ? sellable.map(it=>{
+        const tpl = byCode(it.code) || it;
+        return `<option value="${it.id}">Gamlet ${it.tier} #${it.num} · ${it.code} — quick sell ${fmt(fastSellPrice(it))} B</option>`;
+      }).join('')
+    : '<option value="">Collection is empty — nothing to sell</option>';
+  if(sellable.some(it=>it.id===keep)) sel.value = keep;
+  const btn=$('#fsDo'), btn2=$('#fsToList');
+  if(btn) btn.disabled = !sellable.length;
+  if(btn2) btn2.disabled = !sellable.length;
+}
+function doFastSell(itemId){
+  const idx = state.items.findIndex(x=>x.id===itemId);
+  if(idx < 0) return;
+  const it = state.items[idx];
+  if(isLimited(it)){ toast('Physical 1 of 1 cannot be sold','gray'); haptic('warn'); return; }
+  const price = fastSellPrice(it);
+  state.items.splice(idx,1);
+  state.balance += price;
+  save(); renderInventory(); renderStats(); renderMarket();
+  toast('Sold '+it.code+' for '+fmt(price)+' B'); haptic('ok');
+}
+function openListSheet(itemId){
+  const it = state.items.find(x=>x.id===itemId);
+  if(!it || isLimited(it)) return;
+  const tpl = byCode(it.code) || it;
+  const body = $('#claimBody');
+  const min = minListPrice(it), max = maxListPrice(it);
+  body.innerHTML = `
+    <div class="kicker" style="justify-content:center">Market · list for sale</div>
+    <h3 style="margin-top:8px;text-align:center">Gamlet ${tpl.tier} #${tpl.num}</h3>
+    <p class="sub" style="margin-top:6px;text-align:center;font-size:12px">Set any price you want. Buyers pay from their balance; the card leaves your collection while it sits on the market.</p>
+    <div style="display:flex;justify-content:center;margin-top:14px;max-width:170px;margin-left:auto;margin-right:auto">${cardHTML(tpl,{mini:true},true)}</div>
+    <div style="margin-top:16px;text-align:left">
+      <div class="hint" style="margin-bottom:6px">Your price in B · quick sell now would pay ${fmt(fastSellPrice(it))} B</div>
+      <input id="listPrice" class="price-in" inputmode="numeric" autocomplete="off" value="${it.value}" aria-label="Price">
+      <div class="hint" style="margin-top:6px">Any amount from 1 B. Cards near this tier go for ${fmt(PRICE[tpl.tier])} B.</div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-white" id="listGo">List on market</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-dark" data-close>Cancel</button>
+    </div>`;
+  openOverlay('#claimOverlay');
+  $('#listGo').addEventListener('click', async ()=>{
+    const raw = Math.round(Number((''+$('#listPrice').value).replace(/[^0-9]/g,'')));
+    if(!raw || raw < 1){ toast('Enter a price of at least 1 B','gray'); haptic('warn'); return; }
+    if(raw > 1000000){ toast('That price is too high','gray'); haptic('warn'); return; }
+    const idx = state.items.findIndex(x=>x.id===itemId);
+    if(idx < 0){ closeAll(); return; }
+    const card = state.items[idx];
+    if(isLimited(card)){ closeAll(); return; }
+    state.items.splice(idx,1);
+    const lot = {
+      code: card.code, price: raw, uid: UID,
+      seller: USER ? (USER.username ? '@'+USER.username : USER.name) : 'Browser guest',
+      sellerId: USER ? USER.id : null,
+      at: Date.now()
+    };
+    const id = 'l' + Date.now().toString(36) + rnd(999).toString(36);
+    market[id] = lot;
+    saveMarketCache(); save();
+    renderInventory(); renderStats(); renderMarket();
+    closeAll();
+    toast('Listed for '+fmt(raw)+' B'); haptic('ok');
+    try{
+      await fetch(DB + '/market/' + id + '.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(lot) });
+    }catch(e){}
+    pullMarket();
+  });
+}
+async function buyLot(id){
+  const lot = market[id];
+  if(!lot) return;
+  const tpl = byCode(lot.code);
+  if(!tpl){ toast('This original is not available','gray'); return; }
+  if(lot.uid === UID){ return withdrawLot(id); }
+  if(state.balance < lot.price){ toast('Not enough B — sell a card first','gray'); haptic('warn'); return; }
+  if(state.items.some(i=>i.code===lot.code)){
+    toast('You already own this original','gray'); haptic('warn'); return;
+  }
+  if(tpl.limited){ toast('The 1 of 1 physical card cannot be traded','gray'); haptic('warn'); return; }
+  state.balance -= lot.price;
+  state.items.unshift({ id:'c'+Date.now().toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num,
+    photo:tpl.photo, value:PRICE[tpl.tier], ts:Date.now(), origin:'Market purchase',
+    creator:{ id:lot.sellerId, name:lot.seller }, originUid: lot.uid });
+  delete market[id];
+  saveMarketCache(); save();
+  renderInventory(); renderStats(); renderMarket();
+  toast('Bought '+tpl.code+' for '+fmt(lot.price)+' B'); haptic('ok');
+  showWin(state.items[0]);
+  try{ await fetch(DB + '/market/' + id + '.json', { method:'DELETE' }); }catch(e){}
+  /* pay the seller: written to their cloud wallet, claimed on their next sync */
+  if(lot.uid && lot.uid !== UID){
+    const payout = { amount: lot.price, code: tpl.code, from: USER ? (USER.username||USER.name) : 'Player', at: Date.now() };
+    try{ await fetch(DB + '/payouts/' + encodeURIComponent(lot.uid) + '/p' + id + '.json',
+      { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payout) }); }catch(e){}
+  }
+  pushTrade({ type:'buy', code:tpl.code, price:lot.price, tier:tpl.tier });
+  pullMarket();
+}
+function withdrawLot(id){
+  const lot = market[id];
+  if(!lot || lot.uid !== UID) return;
+  const tpl = byCode(lot.code);
+  if(tpl && !state.items.some(i=>i.code===lot.code)){
+    state.items.unshift({ id:'c'+Date.now().toString(36)+rnd(999).toString(36), code:tpl.code, tier:tpl.tier, num:tpl.num,
+      photo:tpl.photo, value:PRICE[tpl.tier], ts:Date.now(), origin:'Withdrawn from market' });
+  }
+  delete market[id];
+  saveMarketCache(); save();
+  renderInventory(); renderStats(); renderMarket();
+  toast('Lot withdrawn — card is back in your collection'); haptic('light');
+  try{ fetch(DB + '/market/' + id + '.json', { method:'DELETE' }); }catch(e){}
+  pullMarket();
+}
+
+/* --- trade log, feeds the leaderboard volume column --- */
+let trades = [];
+function loadTrades(){ try{ trades = JSON.parse(localStorage.getItem('baobabis.trades.v1')||'[]'); }catch(e){ trades = []; } if(!Array.isArray(trades)) trades = []; }
+function pushTrade(t){
+  trades.unshift(Object.assign({ at: Date.now(), by: UID }, t));
+  trades = trades.slice(0, TRADES_MAX);
+  try{ localStorage.setItem('baobabis.trades.v1', JSON.stringify(trades)); }catch(e){}
+}
+
+/* --- leaderboard --- */
+function ownStats(){
+  let value = 0, cards = 0;
+  state.items.forEach(it=>{ value += (it.value || (PRICE[it.tier]||0)); cards += 1; });
+  return { value, cards };
+}
+function renderLeaderboard(){
+  const host = $('#lbList'); if(!host) return;
+  const me = ownStats();
+  const rows = Object.keys(board).map(uid=>{
+    const p = board[uid] || {};
+    return { uid, name:p.name || 'Player', username:p.username || null, photo:p.photo || null,
+             value: Math.max(0, Math.round(Number(p.value)||0)), cards: Math.max(0, Math.round(Number(p.cards)||0)),
+             at: p.at || 0 };
+  }).filter(r=>r.cards > 0 || r.value > 0);
+  const mineRow = rows.find(r=>r.uid === UID);
+  if(mineRow){ mineRow.value = me.value; mineRow.cards = me.cards; }
+  else rows.push({ uid:UID, name: USER ? USER.name : 'Browser guest', username: USER ? USER.username : null,
+                   photo: USER ? USER.photo : null, value: me.value, cards: me.cards, at: Date.now() });
+  /* de-dupe in case the cloud copy and the local row diverged */
+  const seen = new Set();
+  for(let i=rows.length-1;i>=0;i--){ if(seen.has(rows[i].uid)) rows.splice(i,1); else seen.add(rows[i].uid); }
+  rows.sort((a,b)=> lbMode==='value' ? (b.value-a.value) || (b.cards-a.cards) : (b.cards-a.cards) || (b.value-a.value));
+
+  if(!rows.length){
+    host.innerHTML = '<div class="lb-empty">No collectors yet.<br>Spin a card and take the first place.</div>';
+    return;
+  }
+  host.innerHTML = rows.slice(0, 25).map((r,i)=>{
+    const initials = (r.name||'?').trim().charAt(0).toUpperCase();
+    const isMe = r.uid === UID;
+    const handle = r.username ? '@'+r.username : r.name;
+    return `<div class="lb-row ${isMe?'me':''}">
+      <span class="rk top${i+1}">${i===0 ? '<b>1</b>' : (i+1)}</span>
+      <span class="av">${isMe && r.photo ? '<img src="'+esc(r.photo)+'" alt="">' : esc(initials)}</span>
+      <span class="bd"><b>${esc(handle)}${isMe?' · you':''}</b>
+        <span>${r.cards} card${r.cards===1?'':'s'} · ${fmt(r.value)} B in cards</span></span>
+      <span class="vl"><b>${lbMode==='value' ? fmt(r.value) : r.cards}</b><span>${lbMode==='value' ? 'value' : 'cards'}</span></span>
+    </div>`;
+  }).join('');
+}
+
+/* --- bindings --- */
+$$('#mkChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  $$('#mkChips .chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active'); mkFilter = c.dataset.mk; renderMarket(); haptic('light');
+}));
+$$('#lbChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  $$('#lbChips .chip').forEach(x=>x.classList.remove('active'));
+  c.classList.add('active'); lbMode = c.dataset.lb; renderLeaderboard(); haptic('light');
+}));
+const mkListHost = $('#mkList');
+if(mkListHost) mkListHost.addEventListener('click', e=>{
+  const b = e.target.closest('[data-buy-lot]'); if(!b) return;
+  haptic('light'); buyLot(b.dataset.buyLot);
+});
+const fsBtn = $('#fsDo');
+if(fsBtn) fsBtn.addEventListener('click', ()=>{
+  const id = $('#fsSelect').value;
+  if(!id){ toast('Nothing to sell','gray'); return; }
+  doFastSell(id);
+});
+const fsBtn2 = $('#fsToList');
+if(fsBtn2) fsBtn2.addEventListener('click', ()=>{
+  const id = $('#fsSelect').value;
+  if(!id){ toast('Nothing to list','gray'); return; }
+  openListSheet(id);
+});
+const fsSel = $('#fsSelect');
+if(fsSel) fsSel.addEventListener('change', ()=>{
+  const it = state.items.find(x=>x.id===fsSel.value); if(!it) return;
+  const hint = $('#fsHint'); if(hint) hint.dataset.mode='quick';
+  const wrap = $('#fsHint');
+  if(wrap) wrap.innerHTML = 'Quick sell <b style="color:#fff">'+fmt(fastSellPrice(it))+' B</b> instantly · market price from '+fmt(minListPrice(it))+' B';
+});
+
+/* ================= LEADERBOARD DATA (public, aggregate only) ================= */
+let board = {};
+function pushBoard(){
+  if(!cloudReady) return;
+  const mine = ownStats();
+  const entry = {
+    name: USER ? USER.name : 'Browser guest',
+    username: USER ? USER.username : null,
+    photo: USER ? USER.photo : null,
+    value: mine.value, cards: mine.cards,
+    at: Date.now()
+  };
+  fetch(DB + '/board/' + encodeURIComponent(UID) + '.json',
+    { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(entry) }).catch(()=>{});
+}
+async function pullBoard(){
+  try{
+    const r = await fetch(DB + '/board.json?ts=' + Date.now());
+    if(!r.ok) return;
+    const j = await r.json();
+    board = (j && typeof j === 'object') ? j : {};
+    renderLeaderboard();
+  }catch(e){}
+}
+
 /* ================= TOAST ================= */
 function toast(msg,cls=''){
   const el=document.createElement('div');
@@ -1821,6 +2442,10 @@ $('#dmHeroCode').textContent='Hidden until you own a code';
 renderInventory();
 renderShop();
 renderStats();
+loadTrades();
+loadMarketCache();
+renderLeaderboard();
+pullBoard();
 setStatus('','Free spin ready');
 enableBtn();
 registerLimitedCard();
@@ -1829,9 +2454,14 @@ renderTasks();
 renderIdentity();
 renderAcctLine();
 bindIdentity();
+rememberCreator();
 syncProfile();
+pullMarket();
+claimPayouts();
+setInterval(()=>{ if(!document.hidden){ pullMarket(); claimPayouts(); pullBoard(); } }, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pullMarket(); claimPayouts(); pullBoard(); } });
 observeReveals();
 setTimeout(()=>{ if(!tasks.limitedClaimed){ toast('Limited drop: 1 Gamlet Platinum left'); } },700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b39b348966ddd',t:'MTc5NDM3ODM4Ng=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b39b348966ddd',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a58b7a7f7e7c55f8',t:'MTc5NDM4MTA0MA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a58b7a7f7e7c55f8',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
